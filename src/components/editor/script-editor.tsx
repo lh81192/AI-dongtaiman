@@ -6,16 +6,12 @@ import { Button } from "@/components/ui/button";
 import { useProjectStore } from "@/stores/project-store";
 import { useModelStore } from "@/stores/model-store";
 import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
-import { useLocale } from "next-intl";
-import { Sparkles, Save, Loader2, FileText } from "lucide-react";
+import { Sparkles, Save, Loader2, FileText, Lightbulb } from "lucide-react";
 import { InlineModelPicker } from "@/components/editor/model-selector";
 
 export function ScriptEditor() {
   const t = useTranslations();
-  const locale = useLocale();
-  const router = useRouter();
-  const { project, updateScript, fetchProject } = useProjectStore();
+  const { project, updateIdea, updateScript, fetchProject } = useProjectStore();
   const getModelConfig = useModelStore((s) => s.getModelConfig);
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -28,7 +24,7 @@ export function ScriptEditor() {
     await fetch(`/api/projects/${project.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ script: project.script }),
+      body: JSON.stringify({ idea: project.idea, script: project.script }),
     });
     setSaving(false);
   }
@@ -37,7 +33,7 @@ export function ScriptEditor() {
     if (!project) return;
     setGenerating(true);
 
-    const idea = project.script || "";
+    const idea = project.idea || "";
     updateScript("");
 
     try {
@@ -65,7 +61,6 @@ export function ScriptEditor() {
       }
 
       await fetchProject(project.id);
-      router.push(`/${locale}/project/${project.id}/characters`);
     } catch (err) {
       console.error("Script generate error:", err);
     }
@@ -102,7 +97,7 @@ export function ScriptEditor() {
           </Button>
           <Button
             onClick={handleGenerateScript}
-            disabled={generating}
+            disabled={generating || !project.idea?.trim()}
             size="sm"
           >
             {generating ? (
@@ -115,20 +110,46 @@ export function ScriptEditor() {
         </div>
       </div>
 
-      {/* Editor */}
+      {/* Idea input */}
       <div className="rounded-2xl border border-[--border-subtle] bg-white p-1.5">
+        <div className="flex items-center gap-2 px-5 pt-3 pb-1">
+          <Lightbulb className="h-3.5 w-3.5 text-amber-500" />
+          <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[--text-muted]">
+            {t("project.idea")}
+          </span>
+        </div>
         <Textarea
-          value={project.script}
-          onChange={(e) => updateScript(e.target.value)}
+          value={project.idea}
+          onChange={(e) => updateIdea(e.target.value)}
           placeholder={t("project.scriptIdeaPlaceholder")}
-          rows={20}
+          rows={4}
           disabled={generating}
-          className={`min-h-[200px] max-h-[65vh] overflow-y-auto rounded-xl border-0 bg-transparent p-5 font-mono text-sm leading-relaxed placeholder:text-[--text-muted] focus-visible:ring-0 ${
+          className={`min-h-[80px] max-h-[30vh] overflow-y-auto rounded-xl border-0 bg-transparent px-5 pb-4 font-mono text-sm leading-relaxed placeholder:text-[--text-muted] focus-visible:ring-0 ${
             generating ? "opacity-40" : ""
           }`}
         />
       </div>
 
+      {/* Generated script */}
+      {project.script && (
+        <div className="rounded-2xl border border-[--border-subtle] bg-white p-1.5">
+          <div className="flex items-center gap-2 px-5 pt-3 pb-1">
+            <FileText className="h-3.5 w-3.5 text-primary" />
+            <span className="text-[10px] font-semibold uppercase tracking-[0.15em] text-[--text-muted]">
+              {t("project.generatedScript")}
+            </span>
+          </div>
+          <Textarea
+            value={project.script}
+            onChange={(e) => updateScript(e.target.value)}
+            rows={16}
+            disabled={generating}
+            className={`min-h-[200px] max-h-[55vh] overflow-y-auto rounded-xl border-0 bg-transparent px-5 pb-4 font-mono text-sm leading-relaxed placeholder:text-[--text-muted] focus-visible:ring-0 ${
+              generating ? "opacity-40" : ""
+            }`}
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -127,6 +127,12 @@ async function handleScriptGenerate(
     );
   }
 
+  // Save the original idea before generating
+  await db
+    .update(projects)
+    .set({ idea, updatedAt: new Date() })
+    .where(eq(projects.id, projectId));
+
   const model = createLanguageModel(modelConfig.text);
 
   const result = streamText({

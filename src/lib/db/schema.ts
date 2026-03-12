@@ -3,6 +3,7 @@ import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
 export const projects = sqliteTable("projects", {
   id: text("id").primaryKey(),
   title: text("title").notNull(),
+  idea: text("idea").default(""),
   script: text("script").default(""),
   status: text("status", {
     enum: ["draft", "processing", "completed"],

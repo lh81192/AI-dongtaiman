@@ -28,6 +28,8 @@
   "project": {
     "title": "项目标题",
     "script": "剧本",
+    "idea": "创意构思",
+    "generatedScript": "生成的剧本",
     "characters": "角色",
     "storyboard": "分镜",
     "preview": "预览",

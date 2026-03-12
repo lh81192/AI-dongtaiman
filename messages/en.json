@@ -28,6 +28,8 @@
   "project": {
     "title": "Project Title",
     "script": "Script",
+    "idea": "Creative Idea",
+    "generatedScript": "Generated Script",
     "characters": "Characters",
     "storyboard": "Storyboard",
     "preview": "Preview",

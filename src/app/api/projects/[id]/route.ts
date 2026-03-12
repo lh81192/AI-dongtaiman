@@ -62,6 +62,7 @@ export async function PATCH(
   const { id } = await params;
   const body = (await request.json()) as Partial<{
     title: string;
+    idea: string;
     script: string;
     status: "draft" | "processing" | "completed";
   }>;

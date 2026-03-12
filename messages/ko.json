@@ -28,6 +28,8 @@
   "project": {
     "title": "프로젝트 제목",
     "script": "각본",
+    "idea": "아이디어",
+    "generatedScript": "생성된 각본",
     "characters": "캐릭터",
     "storyboard": "스토리보드",
     "preview": "미리보기",

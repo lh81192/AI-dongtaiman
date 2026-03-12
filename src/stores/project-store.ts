@@ -34,6 +34,7 @@ interface Shot {
 interface Project {
   id: string;
   title: string;
+  idea: string;
   script: string;
   status: string;
   finalVideoUrl: string | null;
@@ -45,6 +46,7 @@ interface ProjectStore {
   project: Project | null;
   loading: boolean;
   fetchProject: (id: string) => Promise<void>;
+  updateIdea: (idea: string) => void;
   updateScript: (script: string) => void;
   setProject: (project: Project) => void;
 }
@@ -58,6 +60,12 @@ export const useProjectStore = create<ProjectStore>((set) => ({
     const res = await fetch(`/api/projects/${id}`);
     const data = await res.json();
     set({ project: data, loading: false });
+  },
+
+  updateIdea: (idea: string) => {
+    set((state) => ({
+      project: state.project ? { ...state.project, idea } : null,
+    }));
   },
 
   updateScript: (script: string) => {

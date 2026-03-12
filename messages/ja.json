@@ -28,6 +28,8 @@
   "project": {
     "title": "プロジェクト名",
     "script": "脚本",
+    "idea": "アイデア",
+    "generatedScript": "生成された脚本",
     "characters": "キャラクター",
     "storyboard": "ストーリーボード",
     "preview": "プレビュー",
