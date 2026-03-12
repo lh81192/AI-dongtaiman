@@ -1,23 +1,17 @@
-FROM node:20-slim AS base
+FROM node:20-alpine AS base
 
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
 # Install ffmpeg with libass for subtitle burn-in, and fonts for CJK subtitles
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ffmpeg fonts-noto-cjk \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache ffmpeg font-noto-cjk
 
 # --- Dependencies ---
 FROM base AS deps
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    python3 make g++ \
-    && rm -rf /var/lib/apt/lists/*
+RUN apk add --no-cache python3 make g++
 WORKDIR /app
 COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
-# Verify native binary exists
-RUN ls node_modules/.pnpm/better-sqlite3@*/node_modules/better-sqlite3/build/Release/better_sqlite3.node
 
 # --- Build ---
 FROM deps AS builder
@@ -31,8 +25,8 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN groupadd --system --gid 1001 nodejs
-RUN useradd --system --uid 1001 --gid nodejs nextjs
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
 
 # Copy built assets
 COPY --from=builder /app/public ./public
