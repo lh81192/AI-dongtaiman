@@ -54,7 +54,7 @@ export default async function LocaleLayout({
       <body className="min-h-screen bg-background font-sans antialiased">
         <NextIntlClientProvider messages={messages}>
           <FingerprintProvider>{children}</FingerprintProvider>
-          <Toaster position="top-center" />
+          <Toaster position="top-center" theme="dark" />
         </NextIntlClientProvider>
       </body>
     </html>
