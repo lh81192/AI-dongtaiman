@@ -9,6 +9,7 @@ import { useTranslations } from "next-intl";
 import { Sparkles, Save, Loader2, FileText, Lightbulb } from "lucide-react";
 import { InlineModelPicker } from "@/components/editor/model-selector";
 import { apiFetch } from "@/lib/api-fetch";
+import { useModelGuard } from "@/hooks/use-model-guard";
 
 export function ScriptEditor() {
   const t = useTranslations();
@@ -16,6 +17,7 @@ export function ScriptEditor() {
   const getModelConfig = useModelStore((s) => s.getModelConfig);
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const textGuard = useModelGuard("text");
   const scriptTextareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
@@ -40,6 +42,7 @@ export function ScriptEditor() {
 
   async function handleGenerateScript() {
     if (!project) return;
+    if (!textGuard()) return;
     setGenerating(true);
 
     const idea = project.idea || "";
