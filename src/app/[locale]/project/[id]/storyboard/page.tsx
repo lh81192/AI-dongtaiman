@@ -150,7 +150,7 @@ export default function StoryboardPage() {
       }
     } catch (err) {
       console.error("Shot split error:", err);
-      toast.error(t("common.generationFailed"));
+      toast.error(err instanceof Error ? err.message : t("common.generationFailed"));
     }
 
     setGenerating(false);
@@ -177,7 +177,7 @@ export default function StoryboardPage() {
       }
     } catch (err) {
       console.error("Batch frame generate error:", err);
-      toast.error(t("common.generationFailed"));
+      toast.error(err instanceof Error ? err.message : t("common.generationFailed"));
     }
 
     setGeneratingFrames(false);
@@ -205,7 +205,7 @@ export default function StoryboardPage() {
       }
     } catch (err) {
       console.error("Batch video generate error:", err);
-      toast.error(t("common.generationFailed"));
+      toast.error(err instanceof Error ? err.message : t("common.generationFailed"));
     }
 
     setGeneratingVideos(false);

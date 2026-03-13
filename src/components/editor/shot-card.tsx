@@ -129,7 +129,7 @@ export function ShotCard({
       onUpdate();
     } catch (err) {
       console.error("Frame generate error:", err);
-      toast.error(t("common.generationFailed"));
+      toast.error(err instanceof Error ? err.message : t("common.generationFailed"));
     }
     setGeneratingFrames(false);
   }
@@ -150,7 +150,7 @@ export function ShotCard({
       onUpdate();
     } catch (err) {
       console.error("Video generate error:", err);
-      toast.error(t("common.generationFailed"));
+      toast.error(err instanceof Error ? err.message : t("common.generationFailed"));
     }
     setGeneratingVideo(false);
   }

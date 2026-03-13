@@ -36,6 +36,16 @@ import { assembleVideo } from "@/lib/video/ffmpeg";
 
 export const maxDuration = 300;
 
+function extractErrorMessage(err: unknown): string {
+  if (!(err instanceof Error)) return String(err);
+  // Try to parse JSON error bodies (e.g. Google GenAI ApiError)
+  try {
+    const parsed = JSON.parse(err.message) as { error?: { message?: string } };
+    if (parsed?.error?.message) return parsed.error.message;
+  } catch {}
+  return err.message;
+}
+
 interface ModelConfig {
   text?: ProviderConfig | null;
   image?: ProviderConfig | null;
@@ -320,7 +330,7 @@ async function handleSingleCharacterImage(
     return NextResponse.json({ characterId, imagePath, status: "ok" });
   } catch (err) {
     console.error(`[SingleCharacterImage] Error for ${character.name}:`, err);
-    return NextResponse.json({ characterId, status: "error", error: String(err) }, { status: 500 });
+    return NextResponse.json({ characterId, status: "error", error: extractErrorMessage(err) }, { status: 500 });
   }
 }
 
@@ -364,7 +374,7 @@ async function handleBatchCharacterImage(
         return { characterId: character.id, name: character.name, imagePath, status: "ok" };
       } catch (err) {
         console.error(`[BatchCharacterImage] Error for ${character.name}:`, err);
-        return { characterId: character.id, name: character.name, status: "error", error: String(err) };
+        return { characterId: character.id, name: character.name, status: "error", error: extractErrorMessage(err) };
       }
     })
   );
@@ -579,7 +589,7 @@ async function handleBatchFrameGenerate(
         shotId: shot.id,
         sequence: shot.sequence,
         status: "error",
-        error: String(err),
+        error: extractErrorMessage(err),
       });
     }
   }
@@ -664,7 +674,7 @@ async function handleSingleFrameGenerate(
   } catch (err) {
     console.error(`[SingleFrameGenerate] Error for shot ${shotId}:`, err);
     await db.update(shots).set({ status: "failed" }).where(eq(shots.id, shotId));
-    return NextResponse.json({ shotId, status: "error", error: String(err) }, { status: 500 });
+    return NextResponse.json({ shotId, status: "error", error: extractErrorMessage(err) }, { status: 500 });
   }
 }
 
@@ -732,7 +742,7 @@ async function handleSingleVideoGenerate(
   } catch (err) {
     console.error(`[SingleVideoGenerate] Error for shot ${shotId}:`, err);
     await db.update(shots).set({ status: "failed" }).where(eq(shots.id, shotId));
-    return NextResponse.json({ shotId, status: "error", error: String(err) }, { status: 500 });
+    return NextResponse.json({ shotId, status: "error", error: extractErrorMessage(err) }, { status: 500 });
   }
 }
 
@@ -808,7 +818,7 @@ async function handleBatchVideoGenerate(
     } catch (err) {
       console.error(`[BatchVideoGenerate] Error for shot ${shot.sequence}:`, err);
       await db.update(shots).set({ status: "failed" }).where(eq(shots.id, shot.id));
-      results.push({ shotId: shot.id, sequence: shot.sequence, status: "error", error: String(err) });
+      results.push({ shotId: shot.id, sequence: shot.sequence, status: "error", error: extractErrorMessage(err) });
     }
   }
 
@@ -870,6 +880,6 @@ async function handleVideoAssembleSync(projectId: string) {
     return NextResponse.json({ outputPath, status: "ok" });
   } catch (err) {
     console.error("[VideoAssemble] Error:", err);
-    return NextResponse.json({ status: "error", error: String(err) }, { status: 500 });
+    return NextResponse.json({ status: "error", error: extractErrorMessage(err) }, { status: 500 });
   }
 }
