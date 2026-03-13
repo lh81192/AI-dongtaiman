@@ -102,6 +102,8 @@ export class VeoProvider implements VideoProvider {
     let operation = initial;
 
     for (let i = 0; i < maxAttempts; i++) {
+      console.log(`[Veo] Poll ${i + 1}: done=${operation.done}`);
+
       if (operation.done) {
         if (operation.error) {
           throw new Error(`Veo generation failed: ${JSON.stringify(operation.error)}`);
@@ -111,7 +113,6 @@ export class VeoProvider implements VideoProvider {
 
       await new Promise((resolve) => setTimeout(resolve, 10_000));
       operation = await this.client.operations.getVideosOperation({ operation });
-      console.log(`[Veo] Poll ${i + 1}: done=${operation.done}`);
     }
 
     throw new Error("Veo generation timed out after 10 minutes");
