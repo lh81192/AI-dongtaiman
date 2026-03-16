@@ -338,23 +338,25 @@ export default function StoryboardPage() {
             icon={Sparkles}
             isLast={false}
           />
+          {generationMode === "keyframe" && (
+            <WorkflowStep
+              step={2}
+              label={t("project.workflowStepFrames")}
+              count={
+                totalShots > 0
+                  ? t("project.workflowFramesCount", {
+                      completed: shotsWithFrames,
+                      total: totalShots,
+                    })
+                  : "—"
+              }
+              status={step2Status}
+              icon={ImageIcon}
+              isLast={false}
+            />
+          )}
           <WorkflowStep
-            step={2}
-            label={t("project.workflowStepFrames")}
-            count={
-              totalShots > 0
-                ? t("project.workflowFramesCount", {
-                    completed: shotsWithFrames,
-                    total: totalShots,
-                  })
-                : "—"
-            }
-            status={step2Status}
-            icon={ImageIcon}
-            isLast={false}
-          />
-          <WorkflowStep
-            step={3}
+            step={generationMode === "reference" ? 2 : 3}
             label={t("project.workflowStepVideos")}
             count={
               totalShots > 0
