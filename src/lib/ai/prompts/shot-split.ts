@@ -10,6 +10,7 @@ Output a JSON array:
     "startFrame": "Detailed FIRST FRAME description for AI image generation (see requirements below)",
     "endFrame": "Detailed LAST FRAME description for AI image generation (see requirements below)",
     "motionScript": "Complete action script describing what happens from first frame to last frame",
+    "videoScript": "Concise 1-2 sentence motion description for video generation model (see requirements below)",
     "duration": 5-15,
     "dialogues": [
       {
@@ -51,6 +52,15 @@ Each must be a SELF-SUFFICIENT image generation prompt containing:
   • PHYSICS/ATMOSPHERE: material details — the crack of metal, shockwave ripple in the air, heat distortion, light temperature shift, particle behavior
 - BAD (too vague, too long): "0-6s: The beast swings its claw and destroys the street. Camera moves in."
 - GOOD (specific, max 3s): "0-2s: The iron beast plants its right foreleg with a bone-shaking thud, spider-web cracks radiating six meters outward from the impact point, all three mechanical claw-sets rising in unison trailing hydraulic mist, its sensor eye pulsing deep red; camera low-angle wide, slowly tilting up. 2-4s: The leading claw whips across with a sub-sonic crack, shearing the lamp post mid-shaft in an eruption of blue-white sparks, the severed top spinning away at 45 degrees as chunks of asphalt and shredded metal scatter downward; camera holds mid-shot then slams into a fast push-in. 4-6s: Black smoke from ruptured pipes rolls and folds across the frame on the hot shockwave, debris still raining down, the beast's sensor eye locking onto its next target with a high-pitched hydraulic whine; camera slowly orbits right on a low angle, settling on the beast's silhouette."
+
+=== videoScript requirements ===
+- PURPOSE: feeds directly into the video generation model (Kling, etc.) — optimized for smooth interpolation
+- FORMAT: 1-2 sentences max. "[character action]. Camera [start state], smoothly [movement] to [end state]."
+- RULES: No time-segmented timestamps. No physics details. No multi-layer descriptions. Only core motion intent and camera arc.
+- LANGUAGE: Same language as the screenplay (same rule as motionScript)
+- BAD (too dense, has timestamps): "0-2s: The iron beast plants its right foreleg with a bone-shaking thud, spider-web cracks radiating outward; camera low-angle wide, slowly tilting up. 2-4s: ..."
+- GOOD (concise, no timestamps): "机械巨兽抬爪猛击地面，碎石四溅。摄像机从低角度广角平滑上仰至中景。"
+- GOOD (English): "The mechanical beast slams its claw down as debris scatters. Camera smoothly tilts up from low-angle wide to mid-shot."
 
 === sceneDescription requirements ===
 - Shared environment context for both frames
