@@ -21,19 +21,21 @@ export interface ModelConfigPayload {
   video?: ProviderConfig | null;
 }
 
-export function createAIProvider(config: ProviderConfig): AIProvider {
+export function createAIProvider(config: ProviderConfig, uploadDir?: string): AIProvider {
   switch (config.protocol) {
     case "openai":
       return new OpenAIProvider({
         apiKey: config.apiKey,
         baseURL: config.baseUrl,
         model: config.modelId,
+        ...(uploadDir && { uploadDir }),
       });
     case "gemini":
       return new GeminiProvider({
         apiKey: config.apiKey,
         baseUrl: config.baseUrl,
         model: config.modelId,
+        ...(uploadDir && { uploadDir }),
       });
     case "kling":
       return new KlingImageProvider({
@@ -41,25 +43,28 @@ export function createAIProvider(config: ProviderConfig): AIProvider {
         secretKey: config.secretKey,
         baseUrl: config.baseUrl,
         model: config.modelId,
+        ...(uploadDir && { uploadDir }),
       });
     default:
       throw new Error(`Unsupported AI protocol: ${config.protocol}`);
   }
 }
 
-export function createVideoProvider(config: ProviderConfig): VideoProvider {
+export function createVideoProvider(config: ProviderConfig, uploadDir?: string): VideoProvider {
   switch (config.protocol) {
     case "seedance":
       return new SeedanceProvider({
         apiKey: config.apiKey,
         baseUrl: config.baseUrl,
         model: config.modelId,
+        ...(uploadDir && { uploadDir }),
       });
     case "gemini":
       return new VeoProvider({
         apiKey: config.apiKey,
         baseUrl: config.baseUrl,
         model: config.modelId,
+        ...(uploadDir && { uploadDir }),
       });
     case "kling":
       return new KlingVideoProvider({
@@ -67,6 +72,7 @@ export function createVideoProvider(config: ProviderConfig): VideoProvider {
         secretKey: config.secretKey,
         baseUrl: config.baseUrl,
         model: config.modelId,
+        ...(uploadDir && { uploadDir }),
       });
     default:
       throw new Error(`Unsupported video protocol: ${config.protocol}`);
@@ -80,16 +86,16 @@ export function resolveAIProvider(modelConfig?: ModelConfigPayload): AIProvider 
   return getAIProvider();
 }
 
-export function resolveImageProvider(modelConfig?: ModelConfigPayload): AIProvider {
+export function resolveImageProvider(modelConfig?: ModelConfigPayload, uploadDir?: string): AIProvider {
   if (modelConfig?.image) {
-    return createAIProvider(modelConfig.image);
+    return createAIProvider(modelConfig.image, uploadDir);
   }
-  return getAIProvider();
+  return getAIProvider(uploadDir);
 }
 
-export function resolveVideoProvider(modelConfig?: ModelConfigPayload): VideoProvider {
+export function resolveVideoProvider(modelConfig?: ModelConfigPayload, uploadDir?: string): VideoProvider {
   if (modelConfig?.video) {
-    return createVideoProvider(modelConfig.video);
+    return createVideoProvider(modelConfig.video, uploadDir);
   }
-  return getVideoProvider();
+  return getVideoProvider(uploadDir);
 }
