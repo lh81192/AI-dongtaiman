@@ -6,13 +6,6 @@ import { ShotCard } from "@/components/editor/shot-card";
 import { Button } from "@/components/ui/button";
 import { useTranslations, useLocale } from "next-intl";
 import { useState, useEffect } from "react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import type { StoryboardVersion } from "@/stores/project-store";
 import { useModelGuard } from "@/hooks/use-model-guard";
 import {
@@ -459,24 +452,21 @@ export default function StoryboardPage() {
           </Button>
 
           {versions.length > 0 && (
-            <Select
+            <select
               value={selectedVersionId ?? ""}
-              onValueChange={(v) => {
+              onChange={(e) => {
+                const v = e.target.value;
                 setSelectedVersionId(v);
                 fetchProject(project!.id, v);
               }}
+              className="h-8 w-36 rounded-lg border border-[--border-subtle] bg-transparent px-2 text-[13px] text-[--text-secondary] outline-none cursor-pointer hover:border-[--border-hover]"
             >
-              <SelectTrigger size="sm" className="w-36">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {versions.map((v) => (
-                  <SelectItem key={v.id} value={v.id}>
-                    {v.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+              {versions.map((v) => (
+                <option key={v.id} value={v.id}>
+                  {v.label}
+                </option>
+              ))}
+            </select>
           )}
 
           {/* Step 2: Batch generate frames — keyframe mode only */}

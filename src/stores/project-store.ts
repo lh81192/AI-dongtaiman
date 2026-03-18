@@ -65,12 +65,14 @@ interface ProjectStore {
   setProject: (project: Project) => void;
 }
 
-export const useProjectStore = create<ProjectStore>((set) => ({
+export const useProjectStore = create<ProjectStore>((set, get) => ({
   project: null,
   loading: false,
 
   fetchProject: async (id: string, versionId?: string) => {
-    set({ loading: true });
+    // Only show loading spinner on initial load (no project yet).
+    // Version switches are background refreshes — don't unmount children.
+    if (!get().project) set({ loading: true });
     const url = `/api/projects/${id}${versionId ? `?versionId=${versionId}` : ""}`;
     const res = await apiFetch(url);
     const data = await res.json();
