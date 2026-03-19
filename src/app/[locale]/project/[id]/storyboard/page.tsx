@@ -48,12 +48,7 @@ export default function StoryboardPage() {
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
   const [versions, setVersions] = useState<StoryboardVersion[]>([]);
   const [openDrawerShotId, setOpenDrawerShotId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"list" | "kanban">(() => {
-    if (typeof window !== "undefined") {
-      return (localStorage.getItem(`storyboardView:${project?.id}`) as "list" | "kanban") || "list";
-    }
-    return "list";
-  });
+  const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
 
   function switchView(mode: "list" | "kanban") {
     setViewMode(mode);
@@ -63,6 +58,12 @@ export default function StoryboardPage() {
   const textGuard = useModelGuard("text");
   const imageGuard = useModelGuard("image");
   const videoGuard = useModelGuard("video");
+
+  useEffect(() => {
+    if (!project?.id) return;
+    const stored = localStorage.getItem(`storyboardView:${project.id}`);
+    if (stored === "list" || stored === "kanban") setViewMode(stored);
+  }, [project?.id]);
 
   useEffect(() => {
     if (!project?.versions) return;
