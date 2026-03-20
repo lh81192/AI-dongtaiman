@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     const validationResult = registerSchema.safeParse(body)
 
     if (!validationResult.success) {
-      const errors = validationResult.error.errors.map((err) => err.message)
+      const errors = (validationResult.error as any).errors.map((err: any) => err.message)
       return NextResponse.json(
         { error: errors[0] },
         { status: 400 }
