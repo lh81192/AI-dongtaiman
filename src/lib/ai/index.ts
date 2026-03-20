@@ -17,6 +17,26 @@ export {
 } from './adapters/elevenlabs';
 export { MiniMaxAdapter, createMiniMaxService } from './adapters/minimax';
 
+// Video Synthesizer
+export {
+  VideoSynthesizer,
+  createVideoSynthesizer,
+  createAudioTrack,
+  createVisualElement,
+  createVideoSettings,
+} from './video-synthesizer';
+export type {
+  VideoCompositionParams,
+  AudioTrack,
+  VisualElement,
+  VisualEffect,
+  VideoSettings,
+  VideoResult,
+  VideoJob,
+  VideoJobStatus,
+  VideoSynthesizerConfig,
+} from './video-synthesizer';
+
 // Factory
 export {
   AIServiceFactory,
