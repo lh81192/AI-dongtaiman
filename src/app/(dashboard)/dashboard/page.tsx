@@ -54,7 +54,7 @@ export default async function DashboardPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {mockProjects.map((project) => (
-            <Link key={project.id} href={`/dashboard/project/${project.id}`}>
+            <Link key={project.id} href={`/dashboard/projects/${project.id}`}>
               <Card className="hover:shadow-md transition-shadow cursor-pointer">
                 <CardHeader>
                   <CardTitle className="text-lg">{project.title}</CardTitle>
