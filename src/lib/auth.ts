@@ -3,6 +3,10 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import { db } from './db';
 
+if (!process.env.NEXTAUTH_SECRET) {
+  throw new Error('NEXTAUTH_SECRET environment variable is required');
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -28,7 +32,7 @@ export const authOptions: NextAuthOptions = {
           } | undefined;
 
         if (!user) {
-          throw new Error('No user found with this email');
+          throw new Error('Invalid email or password');
         }
 
         const isPasswordValid = await bcrypt.compare(
@@ -37,7 +41,7 @@ export const authOptions: NextAuthOptions = {
         );
 
         if (!isPasswordValid) {
-          throw new Error('Invalid password');
+          throw new Error('Invalid email or password');
         }
 
         return {
@@ -52,7 +56,7 @@ export const authOptions: NextAuthOptions = {
   ],
   session: {
     strategy: 'jwt',
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 7 * 24 * 60 * 60, // 7 days
   },
   callbacks: {
     async jwt({ token, user }) {
