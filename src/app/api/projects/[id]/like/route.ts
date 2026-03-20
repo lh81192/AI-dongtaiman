@@ -12,8 +12,6 @@ interface RouteParams {
 export async function GET(request: Request, { params }: RouteParams) {
   try {
     const { id: projectId } = await params;
-    const url = new URL(request.url);
-    const userId = url.searchParams.get("userId");
 
     // Get total like count
     const likeCountResult = db.prepare(`
@@ -22,12 +20,13 @@ export async function GET(request: Request, { params }: RouteParams) {
 
     const likeCount = likeCountResult.count;
 
-    // Check if current user has liked
+    // Check if current user has liked (only for authenticated users)
+    const session = await getServerSession(authOptions);
     let isLiked = false;
-    if (userId) {
+    if (session?.user?.id) {
       const existingLike = db.prepare(`
         SELECT id FROM likes WHERE user_id = ? AND project_id = ?
-      `).get(userId, projectId);
+      `).get(session.user.id, projectId);
       isLiked = !!existingLike;
     }
 

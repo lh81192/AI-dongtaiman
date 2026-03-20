@@ -5,6 +5,18 @@ export function cn(...inputs: ClassValue[]): string {
   return clsx(inputs);
 }
 
+// Escape HTML to prevent XSS attacks
+export function escapeHtml(text: string): string {
+  const map: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  };
+  return text.replace(/[&<>"']/g, (char) => map[char]);
+}
+
 // Generate a unique ID
 export function generateId(): string {
   return crypto.randomUUID();

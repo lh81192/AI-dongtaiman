@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { generateId } from "@/lib/utils";
+import { escapeHtml } from "@/lib/utils";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -13,7 +14,6 @@ export async function GET(request: Request, { params }: RouteParams) {
   try {
     const { id: projectId } = await params;
     const url = new URL(request.url);
-    const userId = url.searchParams.get("userId");
     const page = parseInt(url.searchParams.get("page") || "1");
     const limit = parseInt(url.searchParams.get("limit") || "10");
     const offset = (page - 1) * limit;
@@ -29,6 +29,10 @@ export async function GET(request: Request, { params }: RouteParams) {
         { status: 404 }
       );
     }
+
+    // Get current user from session (for owner check)
+    const session = await getServerSession(authOptions);
+    const currentUserId = session?.user?.id;
 
     // Get total comment count
     const totalCountResult = db.prepare(`
@@ -98,11 +102,20 @@ export async function GET(request: Request, { params }: RouteParams) {
           avatar: string | null;
         }[];
 
-        return {
+        // Sanitize content to prevent XSS
+        const sanitizedComment = {
           ...comment,
-          replies,
-          isOwner: userId === comment.user_id,
+          content: escapeHtml(comment.content),
+          nickname: comment.nickname ? escapeHtml(comment.nickname) : null,
+          replies: replies.map(reply => ({
+            ...reply,
+            content: escapeHtml(reply.content),
+            nickname: reply.nickname ? escapeHtml(reply.nickname) : null,
+          })),
+          isOwner: currentUserId === comment.user_id,
         };
+
+        return sanitizedComment;
       })
     );
 
@@ -218,6 +231,8 @@ export async function POST(request: Request, { params }: RouteParams) {
       message: parentId ? "回复成功" : "评论成功",
       comment: {
         ...newComment,
+        content: escapeHtml(newComment.content),
+        nickname: newComment.nickname ? escapeHtml(newComment.nickname) : null,
         replies: [],
         reply_count: 0,
         isOwner: true,

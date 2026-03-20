@@ -12,8 +12,6 @@ interface RouteParams {
 export async function GET(request: Request, { params }: RouteParams) {
   try {
     const { id: projectId } = await params;
-    const url = new URL(request.url);
-    const userId = url.searchParams.get("userId");
 
     // Get total favorite count
     const favoriteCountResult = db.prepare(`
@@ -22,12 +20,13 @@ export async function GET(request: Request, { params }: RouteParams) {
 
     const favoriteCount = favoriteCountResult.count;
 
-    // Check if current user has favorited
+    // Check if current user has favorited (only for authenticated users)
+    const session = await getServerSession(authOptions);
     let isFavorited = false;
-    if (userId) {
+    if (session?.user?.id) {
       const existingFavorite = db.prepare(`
         SELECT id FROM favorites WHERE user_id = ? AND project_id = ?
-      `).get(userId, projectId);
+      `).get(session.user.id, projectId);
       isFavorited = !!existingFavorite;
     }
 
