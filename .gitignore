@@ -1,2 +1,8 @@
 # data directory
 data/
+
+# Uploaded files
+public/uploads/
+
+# Local environment file (never commit)
+.env.local
