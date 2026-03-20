@@ -3,7 +3,7 @@ import path from 'path';
 import fs from 'fs';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
-const DB_PATH = path.join(DATA_DIR, 'ai-manju.db');
+const DB_PATH = path.join(DATA_DIR, 'manju.db');
 
 export const db: Database.Database = (() => {
   // Ensure data directory exists
@@ -13,6 +13,9 @@ export const db: Database.Database = (() => {
 
   // Initialize database
   const database = new Database(DB_PATH);
+
+  // Enable WAL journal mode
+  database.pragma('journal_mode = WAL');
 
   // Enable foreign keys
   database.pragma('foreign_keys = ON');
@@ -26,10 +29,10 @@ export function initDb(): void {
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
       email TEXT UNIQUE NOT NULL,
-      username TEXT NOT NULL,
       password_hash TEXT NOT NULL,
+      nickname TEXT NOT NULL,
       avatar TEXT,
-      bio TEXT,
+      role TEXT DEFAULT 'user',
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now'))
     )
@@ -42,10 +45,11 @@ export function initDb(): void {
       user_id TEXT NOT NULL,
       title TEXT NOT NULL,
       description TEXT,
+      epub_path TEXT,
       cover_image TEXT,
       status TEXT DEFAULT 'draft',
-      is_public INTEGER DEFAULT 0,
-      view_count INTEGER DEFAULT 0,
+      video_url TEXT,
+      duration INTEGER,
       created_at TEXT DEFAULT (datetime('now')),
       updated_at TEXT DEFAULT (datetime('now')),
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
@@ -57,12 +61,12 @@ export function initDb(): void {
     CREATE TABLE IF NOT EXISTS project_configs (
       id TEXT PRIMARY KEY,
       project_id TEXT NOT NULL,
-      config_key TEXT NOT NULL,
-      config_value TEXT,
+      voice_model TEXT,
+      voice_params TEXT,
+      bgm_model TEXT,
+      sfx_model TEXT,
       created_at TEXT DEFAULT (datetime('now')),
-      updated_at TEXT DEFAULT (datetime('now')),
-      FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE,
-      UNIQUE(project_id, config_key)
+      FOREIGN KEY (project_id) REFERENCES projects(id) ON DELETE CASCADE
     )
   `);
 
