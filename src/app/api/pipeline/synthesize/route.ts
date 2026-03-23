@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { runGenerationPipeline, getPipelineStatus } from '@/lib/services/generation-service';
+import { runGenerationPipeline, getPipelineStatus, initPipelineStatus } from '@/lib/services/generation-service';
 
 export async function POST(request: Request) {
   try {
@@ -20,6 +20,9 @@ export async function POST(request: Request) {
     }
 
     const config = configStr ? JSON.parse(configStr) : {};
+
+    // Initialize pipeline status so GET handler can poll immediately
+    initPipelineStatus(projectId, 10);
 
     runGenerationPipeline({
       projectId,

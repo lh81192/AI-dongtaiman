@@ -47,6 +47,10 @@ export async function runGenerationPipeline(
 
     const epubResult = await parseEPUB(epubFile);
 
+    // Step 1b: Initialize pipeline status
+    const totalScenes = epubResult.pages.filter((p) => p.images.length > 0).length;
+    initPipelineStatus(projectId, totalScenes);
+
     // Save cover
     if (epubResult.metadata.cover) {
       db.prepare(`
@@ -86,6 +90,8 @@ export async function runGenerationPipeline(
       saveSceneToDb(projectId, scene, page);
     }
 
+    updatePipelineStep(projectId, 'analyzing', scenes.length, totalScenes);
+
     // Step 3: Generate key frames
     onProgress?.({
       step: 'generating-frames',
@@ -116,6 +122,8 @@ export async function runGenerationPipeline(
       });
     }
 
+    updatePipelineStep(projectId, 'generating-frames', scenes.length, totalScenes);
+
     // Step 4: Generate video clips
     onProgress?.({
       step: 'generating-video',
@@ -125,6 +133,7 @@ export async function runGenerationPipeline(
       message: '正在生成视频片段...',
     });
 
+    const videoClips: any[] = [];
     for (let i = 0; i < scenes.length; i++) {
       const scene = scenes[i];
       const firstFrame = {
@@ -143,7 +152,8 @@ export async function runGenerationPipeline(
         status: 'completed' as const,
       };
 
-      await generateVideoClip({ scene, firstFrame, lastFrame, config, userId });
+      const clip = await generateVideoClip({ scene, firstFrame, lastFrame, config, userId });
+      videoClips.push(clip);
 
       onProgress?.({
         step: 'generating-video',
@@ -153,6 +163,8 @@ export async function runGenerationPipeline(
         message: `生成视频 ${i + 1}/${scenes.length}...`,
       });
     }
+
+    updatePipelineStep(projectId, 'generating-video', scenes.length, totalScenes);
 
     // Step 5: Generate audio
     onProgress?.({
@@ -173,6 +185,8 @@ export async function runGenerationPipeline(
       message: '音频生成完成',
     });
 
+    updatePipelineStep(projectId, 'generating-audio', scenes.length, totalScenes);
+
     // Step 6: Compose final video
     onProgress?.({
       step: 'synthesizing',
@@ -182,7 +196,6 @@ export async function runGenerationPipeline(
       message: '正在合成最终视频...',
     });
 
-    const videoClips = getVideoClipsFromDb(projectId);
     const audioTracks = getAudioTracksFromDb(projectId);
 
     const compositionResult = await composeFinalVideo({
@@ -204,6 +217,12 @@ export async function runGenerationPipeline(
       projectId
     );
 
+    db.prepare(`
+      UPDATE pipeline_status
+      SET status = 'completed', current_step = 'completed', updated_at = datetime('now'), completed_at = datetime('now')
+      WHERE project_id = ?
+    `).run(projectId);
+
     onProgress?.({
       step: 'completed',
       progress: 100,
@@ -223,6 +242,12 @@ export async function runGenerationPipeline(
       UPDATE projects
       SET status = 'failed', updated_at = datetime('now')
       WHERE id = ?
+    `).run(projectId);
+
+    db.prepare(`
+      UPDATE pipeline_status
+      SET status = 'failed', updated_at = datetime('now')
+      WHERE project_id = ?
     `).run(projectId);
 
     throw error;
@@ -289,4 +314,20 @@ export function getPipelineStatus(projectId: string): PipelineState | null {
     startedAt: status.started_at ? new Date(status.started_at) : undefined,
     completedAt: status.completed_at ? new Date(status.completed_at) : undefined,
   };
+}
+
+export function initPipelineStatus(projectId: string, totalScenes: number): void {
+  db.prepare(`
+    INSERT OR REPLACE INTO pipeline_status
+    (id, project_id, current_step, total_scenes, processed_scenes, status, started_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))
+  `).run(generateId(), projectId, 'parsing', totalScenes, 0, 'running');
+}
+
+function updatePipelineStep(projectId: string, step: string, processedScenes: number, totalScenes: number): void {
+  db.prepare(`
+    UPDATE pipeline_status
+    SET current_step = ?, processed_scenes = ?, updated_at = datetime('now')
+    WHERE project_id = ?
+  `).run(step, processedScenes, projectId);
 }
