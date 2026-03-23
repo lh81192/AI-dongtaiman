@@ -149,6 +149,16 @@ export const textProviders: ModelProvider[] = [
 export const imageProviders: ModelProvider[] = [
   // 国产协议
   {
+    id: 'minimax-image',
+    name: 'MiniMax Image',
+    nameZh: 'MiniMax 图像',
+    type: 'image',
+    protocol: 'domestic',
+    defaultApiUrl: 'https://api.minimax.chat/v1',
+    modelListEndpoint: '/models',
+    description: 'MiniMax 文生图',
+  },
+  {
     id: 'zhipu-cogview',
     name: 'Zhipu CogView',
     nameZh: '智谱 CogView',
