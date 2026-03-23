@@ -122,6 +122,22 @@
     "regeneratePrompt": "プロンプトを再生成",
     "regenerateVideo": "動画を再生成"
   },
+  "episode": {
+    "title": "エピソード管理",
+    "count": "エピソード",
+    "create": "新規エピソード",
+    "edit": "エピソード編集",
+    "editTitle": "新しいタイトルを入力",
+    "titlePlaceholder": "エピソードタイトルを入力...",
+    "noEpisodes": "エピソードがまだありません。上のボタンをクリックして作成してください。",
+    "deleteConfirm": "このエピソードを削除しますか？すべてのショットとゲストキャラクターが削除されます。",
+    "cannotDeleteLast": "最後のエピソードは削除できません",
+    "created": "エピソードが作成されました",
+    "backToList": "エピソード一覧に戻る",
+    "mainCharacter": "メインキャラクター",
+    "guestCharacter": "ゲストキャラクター",
+    "promoteToMain": "メインに昇格"
+  },
   "settings": {
     "title": "モデル設定",
     "providers": "プロバイダー",

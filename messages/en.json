@@ -122,6 +122,22 @@
     "regeneratePrompt": "Regenerate Prompt",
     "regenerateVideo": "Regenerate Video"
   },
+  "episode": {
+    "title": "Episodes",
+    "count": "episodes",
+    "create": "New Episode",
+    "edit": "Edit Episode",
+    "editTitle": "Enter new title",
+    "titlePlaceholder": "Enter episode title...",
+    "noEpisodes": "No episodes yet. Click the button above to create one.",
+    "deleteConfirm": "Are you sure you want to delete this episode? All shots and guest characters will be removed.",
+    "cannotDeleteLast": "Cannot delete the last episode",
+    "created": "Episode created",
+    "backToList": "Back to Episodes",
+    "mainCharacter": "Main Character",
+    "guestCharacter": "Guest Character",
+    "promoteToMain": "Promote to Main"
+  },
   "settings": {
     "title": "Model Settings",
     "providers": "Providers",
