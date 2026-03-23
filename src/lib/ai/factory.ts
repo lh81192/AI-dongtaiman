@@ -31,7 +31,10 @@ import {
 import { MiniMaxAdapter, type MiniMaxConfig } from './adapters/minimax';
 import { OpenAICompatibleAdapter, type OpenAICompatibleConfig } from './adapters/openai-compatible';
 import { GeminiCompatibleAdapter, type GeminiCompatibleConfig } from './adapters/gemini-compatible';
-import { SeedanceAdapter, type SeedanceConfig } from './adapters/seedance';
+import { SeedanceAdapter, type SeedanceConfig, createSeedanceService } from './adapters/seedance';
+import { createOpenAICompatibleService } from './adapters/openai-compatible';
+import { createGeminiCompatibleService } from './adapters/gemini-compatible';
+import { db } from './db';
 
 // ============================================================================
 // Factory State
@@ -528,4 +531,94 @@ export function createConfigFromEnv(): AIServiceConfig {
 export function initializeFromEnv(): AIServiceFactory {
   const config = createConfigFromEnv();
   return AIServiceFactory.initialize(config);
+}
+
+// ============================================================================
+// User Configuration Support
+// ============================================================================
+
+/**
+ * 从用户配置创建 AI 服务实例
+ */
+export async function createServiceFromUserConfig(configId: string, userId: string) {
+  const config = db.prepare(`
+    SELECT * FROM user_model_configs WHERE id = ? AND user_id = ? AND enabled = 1
+  `).get(configId, userId) as any;
+
+  if (!config) {
+    throw new Error('Model configuration not found or disabled');
+  }
+
+  const { protocol, provider_type } = config;
+
+  switch (protocol) {
+    case 'openai':
+      return createOpenAICompatibleService({
+        apiUrl: config.api_url,
+        apiKey: config.api_key,
+        modelId: config.model_ids?.[0],
+      });
+
+    case 'gemini':
+    case 'google':
+      return createGeminiCompatibleService({
+        apiUrl: config.api_url,
+        apiKey: config.api_key,
+        modelId: config.model_ids?.[0],
+      });
+
+    case 'seedance':
+      return createSeedanceService({
+        apiUrl: config.api_url,
+        apiKey: config.api_key,
+      });
+
+    case 'domestic':
+      // 国产协议根据类型选择适配器
+      if (provider_type === 'video' && config.provider_id === 'cogvideo') {
+        return createGeminiCompatibleService({
+          apiUrl: config.api_url,
+          apiKey: config.api_key,
+          modelId: config.model_ids?.[0],
+        });
+      }
+      // 默认使用 OpenAI 兼容格式
+      return createOpenAICompatibleService({
+        apiUrl: config.api_url,
+        apiKey: config.api_key,
+        modelId: config.model_ids?.[0],
+      });
+
+    default:
+      throw new Error(`Unsupported protocol: ${protocol}`);
+  }
+}
+
+/**
+ * 获取用户指定类型的默认配置
+ */
+export function getDefaultConfig(userId: string, providerType: 'text' | 'image' | 'video') {
+  const config = db.prepare(`
+    SELECT * FROM user_model_configs
+    WHERE user_id = ? AND provider_type = ? AND enabled = 1 AND is_default = 1
+  `).get(userId, providerType);
+
+  return config as any;
+}
+
+/**
+ * 获取用户所有启用的配置
+ */
+export function getEnabledConfigs(userId: string, providerType?: 'text' | 'image' | 'video') {
+  let query = 'SELECT * FROM user_model_configs WHERE user_id = ? AND enabled = 1';
+  const params: string[] = [userId];
+
+  if (providerType) {
+    query += ' AND provider_type = ?';
+    params.push(providerType);
+  }
+
+  query += ' ORDER BY is_default DESC, created_at DESC';
+
+  return db.prepare(query).all(...params) as any[];
 }
