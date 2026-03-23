@@ -127,6 +127,40 @@ EPUB File Upload
    Final Video Output (mp4 / webm / mov)
 ```
 
+### AI Manga-to-Video Generation Pipeline
+
+```
+EPUB Upload → Parse → AI Scene Analysis → Key Frame Generation
+    ↓
+Video Clip Generation (with frame continuity) → Audio Synthesis
+    ↓
+Final Video Composition → Output
+```
+
+**Pipeline Steps:**
+
+1. **EPUB Parsing** - Extract manga pages, images, and text
+2. **AI Scene Analysis** - LLM analyzes each panel for:
+   - Scene description and setting
+   - Camera type and movement
+   - Character actions and emotions
+   - Dialogue extraction
+   - Mood and visual style
+3. **Key Frame Generation** - Create first frame (original image) and last frame (AI-generated for continuity)
+4. **Video Clip Generation** - Generate 3-5 second video clips using external APIs (MiniMax, Seedance)
+   - Last frame of each clip connects to the first frame of the next
+   - No overlapping frames between clips
+5. **Audio Synthesis** - Generate:
+   - Voice synthesis for dialogues
+   - Background music (BGM) matching the mood
+   - Sound effects (SFX)
+6. **Video Composition** - Combine video clips with audio tracks
+
+**Key Features:**
+- **Frame Continuity**: Last frame of each segment becomes the reference for seamless transitions
+- **Story Integrity**: All panels are processed to maintain complete story flow
+- **Multi-Model Support**: Uses configured text, image, video, and audio models
+
 ### Model Configuration
 
 The platform supports multiple AI model providers with different protocols:
