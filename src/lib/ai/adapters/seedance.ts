@@ -9,6 +9,12 @@ import type {
   AIServiceError,
   AIService,
   AudioResult,
+  GenerativeService,
+  GenerativeTextParams,
+  GenerativeTextResult,
+  GenerativeImageParams,
+  GenerativeImageResult,
+  GenerativeModel,
 } from '../types';
 
 // ============================================================================
@@ -114,7 +120,7 @@ export interface VideoJob {
 // Seedance Service Implementation
 // ============================================================================
 
-export class SeedanceAdapter implements AIService {
+export class SeedanceAdapter implements AIService, GenerativeService {
   readonly name = 'seedance';
   readonly provider = 'seedance' as const;
 
@@ -181,7 +187,7 @@ export class SeedanceAdapter implements AIService {
       throw this.createError('INVALID_PROMPT', 'Prompt is required');
     }
 
-    const duration = params.duration || this.config.defaultDuration;
+    const duration = params.duration ?? this.config.defaultDuration ?? 5;
     if (duration < 1 || duration > 30) {
       throw this.createError('INVALID_DURATION', 'Duration must be between 1 and 30 seconds');
     }
@@ -440,6 +446,27 @@ export class SeedanceAdapter implements AIService {
    */
   private sleep(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Text generation is not supported by Seedance (video-only service)
+   */
+  async generateText(_params: GenerativeTextParams): Promise<GenerativeTextResult> {
+    throw this.createError('NOT_SUPPORTED', 'Text generation is not supported by Seedance');
+  }
+
+  /**
+   * Image generation is not supported by Seedance (video-only service)
+   */
+  async generateImage(_params: GenerativeImageParams): Promise<GenerativeImageResult> {
+    throw this.createError('NOT_SUPPORTED', 'Image generation is not supported by Seedance');
+  }
+
+  /**
+   * Get available video models for Seedance
+   */
+  async getModels(): Promise<GenerativeModel[]> {
+    return [];
   }
 }
 

@@ -34,7 +34,7 @@ import { GeminiCompatibleAdapter, type GeminiCompatibleConfig } from './adapters
 import { SeedanceAdapter, type SeedanceConfig, createSeedanceService } from './adapters/seedance';
 import { createOpenAICompatibleService } from './adapters/openai-compatible';
 import { createGeminiCompatibleService } from './adapters/gemini-compatible';
-import { db } from './db';
+import { db } from '../db';
 
 // ============================================================================
 // Factory State
@@ -556,7 +556,7 @@ export async function createServiceFromUserConfig(configId: string, userId: stri
       return createOpenAICompatibleService({
         apiUrl: config.api_url,
         apiKey: config.api_key,
-        modelId: config.model_ids?.[0],
+        defaultModel: config.model_ids?.[0],
       });
 
     case 'gemini':
@@ -564,7 +564,7 @@ export async function createServiceFromUserConfig(configId: string, userId: stri
       return createGeminiCompatibleService({
         apiUrl: config.api_url,
         apiKey: config.api_key,
-        modelId: config.model_ids?.[0],
+        defaultModel: config.model_ids?.[0],
       });
 
     case 'seedance':
@@ -579,14 +579,14 @@ export async function createServiceFromUserConfig(configId: string, userId: stri
         return createGeminiCompatibleService({
           apiUrl: config.api_url,
           apiKey: config.api_key,
-          modelId: config.model_ids?.[0],
+          defaultModel: config.model_ids?.[0],
         });
       }
       // 默认使用 OpenAI 兼容格式
       return createOpenAICompatibleService({
         apiUrl: config.api_url,
         apiKey: config.api_key,
-        modelId: config.model_ids?.[0],
+        defaultModel: config.model_ids?.[0],
       });
 
     default:
