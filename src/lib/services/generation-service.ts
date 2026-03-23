@@ -8,7 +8,7 @@ import { generateId } from '@/lib/utils';
 import { parseEPUB } from '@/lib/epub/parser';
 import type { EPUBParseResult } from '@/lib/epub/types';
 import { analyzeScene } from '@/lib/pipeline/scene-analyzer';
-import type { SceneAnalysis, GenerationConfig, PipelineState } from '@/lib/pipeline/types';
+import type { SceneAnalysis, GenerationConfig, PipelineState, KeyFrame, VideoClip, AudioTrack } from '@/lib/pipeline/types';
 import { generateKeyFrames } from '@/lib/pipeline/frame-generator';
 import { generateVideoClip } from '@/lib/pipeline/video-generator';
 import { generateAllAudio } from '@/lib/pipeline/audio-generator';
@@ -93,6 +93,7 @@ export async function runGenerationPipeline(
     updatePipelineStep(projectId, 'analyzing', scenes.length, totalScenes);
 
     // Step 3: Generate key frames
+    const framesBySceneIndex = new Map<number, KeyFrame[]>();
     onProgress?.({
       step: 'generating-frames',
       progress: 25,
@@ -105,13 +106,15 @@ export async function runGenerationPipeline(
       const scene = scenes[i];
       const originalImageUrl = pagesWithImages[scene.pageIndex]?.images[0]?.src;
 
-      await generateKeyFrames({
+      const frames = await generateKeyFrames({
         scene,
         nextScene: scenes[i + 1],
         config,
         userId,
         originalImageUrl,
       });
+      saveKeyFramesToDb(frames);
+      framesBySceneIndex.set(i, frames);
 
       onProgress?.({
         step: 'generating-frames',
@@ -136,23 +139,12 @@ export async function runGenerationPipeline(
     const videoClips: any[] = [];
     for (let i = 0; i < scenes.length; i++) {
       const scene = scenes[i];
-      const firstFrame = {
-        id: `kf_first_${scene.sceneId}`,
-        sceneId: scene.sceneId,
-        frameType: 'first' as const,
-        imageUrl: pagesWithImages[scene.pageIndex]?.images[0]?.src,
-        prompt: scene.firstFrameDescription,
-        status: 'completed' as const,
-      };
-      const lastFrame = {
-        id: `kf_last_${scene.sceneId}`,
-        sceneId: scene.sceneId,
-        frameType: 'last' as const,
-        prompt: scene.lastFrameDescription,
-        status: 'completed' as const,
-      };
+      const frames = framesBySceneIndex.get(i) || [];
+      const firstFrame = frames.find((f) => f.frameType === 'first')!;
+      const lastFrame = frames.find((f) => f.frameType === 'last')!;
 
       const clip = await generateVideoClip({ scene, firstFrame, lastFrame, config, userId });
+      saveVideoClipToDb(clip);
       videoClips.push(clip);
 
       onProgress?.({
@@ -175,7 +167,8 @@ export async function runGenerationPipeline(
       message: '正在生成配音、BGM、音效...',
     });
 
-    await generateAllAudio({ projectId, scenes, config, userId });
+    const audioResult = await generateAllAudio({ projectId, scenes, config, userId });
+    saveAudioTracksToDb([...audioResult.voiceTracks, audioResult.bgmTrack, ...audioResult.sfxTracks].filter(Boolean) as AudioTrack[]);
 
     onProgress?.({
       step: 'generating-audio',
@@ -330,4 +323,29 @@ function updatePipelineStep(projectId: string, step: string, processedScenes: nu
     SET current_step = ?, processed_scenes = ?, updated_at = datetime('now')
     WHERE project_id = ?
   `).run(step, processedScenes, projectId);
+}
+
+function saveKeyFramesToDb(frames: KeyFrame[]): void {
+  for (const frame of frames) {
+    db.prepare(`
+      INSERT OR IGNORE INTO key_frames (id, scene_id, frame_type, image_url, prompt, status)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).run(frame.id, frame.sceneId, frame.frameType, frame.imageUrl || null, frame.prompt, frame.status);
+  }
+}
+
+function saveVideoClipToDb(clip: VideoClip): void {
+  db.prepare(`
+    INSERT OR IGNORE INTO video_clips (id, scene_id, video_url, duration, prompt, status, model_used)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `).run(clip.id, clip.sceneId, clip.videoUrl || null, clip.duration, clip.prompt, clip.status, clip.modelUsed || null);
+}
+
+function saveAudioTracksToDb(tracks: AudioTrack[]): void {
+  for (const track of tracks) {
+    db.prepare(`
+      INSERT OR IGNORE INTO audio_tracks (id, project_id, scene_id, track_type, audio_url, duration, prompt, voice_id, model_used, status)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(track.id, track.projectId, track.sceneId || null, track.trackType, track.audioUrl || null, track.duration, track.prompt || null, track.voiceId || null, track.modelUsed || null, track.status);
+  }
 }

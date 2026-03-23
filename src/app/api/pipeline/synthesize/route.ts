@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { runGenerationPipeline, getPipelineStatus, initPipelineStatus } from '@/lib/services/generation-service';
+import { db } from '@/lib/db';
 
 export async function POST(request: Request) {
   try {
@@ -37,7 +38,13 @@ export async function POST(request: Request) {
         ...config,
       },
       userId: session.user.id,
-    }).catch(console.error);
+    }).catch((error) => {
+      // Update pipeline status to failed BEFORE throwing
+      try {
+        db.prepare(`UPDATE pipeline_status SET status = 'failed', error_message = ?, updated_at = datetime('now') WHERE project_id = ?`).run(String(error), projectId);
+      } catch {}
+      console.error('[SynthesizeRoute] Pipeline failed:', error);
+    });
 
     return NextResponse.json({
       message: '生成任务已启动',

@@ -272,4 +272,7 @@ export function initDb(): void {
   console.log('Database initialized successfully!');
 }
 
+// Auto-initialize on module load
+initDb();
+
 export default db;
