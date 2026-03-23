@@ -31,6 +31,12 @@ export function Header() {
                 工作台
               </Link>
               <Link
+                href="/dashboard/settings"
+                className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-all"
+              >
+                模型配置
+              </Link>
+              <Link
                 href="/gallery"
                 className="px-4 py-2 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition-all"
               >
