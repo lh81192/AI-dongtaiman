@@ -6,6 +6,10 @@
 import { createServiceFromUserConfig, getDefaultConfig } from '@/lib/ai/factory';
 import type { SceneAnalysis, Dialogue, CameraType, GenerationConfig } from './types';
 
+interface TextGenerationService {
+  generateText(opts: { prompt: string; model?: string; maxTokens?: number; temperature?: number }): Promise<{ text: string }>;
+}
+
 export interface AnalyzeSceneInput {
   pageIndex: number;
   imageUrl?: string;
@@ -47,14 +51,14 @@ const USER_PROMPT_TEMPLATE = `请分析这个漫画分镜（第 {pageIndex} 页�
 export async function analyzeScene(input: AnalyzeSceneInput): Promise<SceneAnalysis> {
   const { pageIndex, rawText, previousSceneDescription, config, userId } = input;
 
-  let textService: any;
+  let textService: TextGenerationService | null = null;
   try {
     const textConfigId = config.textModelConfigId || getDefaultConfig(userId, 'text')?.id;
     if (textConfigId) {
       textService = await createServiceFromUserConfig(textConfigId, userId);
     }
   } catch (error) {
-    console.warn('Failed to create text service from user config, using fallback');
+    console.warn('[SceneAnalyzer] Failed to create text service, using fallback:', error);
   }
 
   let textContent = rawText || '（无对白文本）';
@@ -79,7 +83,7 @@ export async function analyzeScene(input: AnalyzeSceneInput): Promise<SceneAnaly
     .replace('{previousContext}', previousContext);
 
   let result: string;
-  if (textService && 'generateText' in textService) {
+  if (textService) {
     const response = await textService.generateText({
       prompt: `${SYSTEM_PROMPT}\n\n${userPrompt}`,
       model: config.textModel,
