@@ -15,6 +15,11 @@ import type {
   BGMParams,
   SFXParams,
   AudioResult,
+  GenerativeService,
+  GenerativeTextParams,
+  GenerativeImageParams,
+  GenerativeTextResult,
+  GenerativeImageResult,
 } from './types';
 
 import { GPTSoVITSAdapter, type GPTSoVITSConfig } from './adapters/gpt-sovits';
@@ -24,6 +29,9 @@ import {
   type ElevenLabsConfig,
 } from './adapters/elevenlabs';
 import { MiniMaxAdapter, type MiniMaxConfig } from './adapters/minimax';
+import { OpenAICompatibleAdapter, type OpenAICompatibleConfig } from './adapters/openai-compatible';
+import { GeminiCompatibleAdapter, type GeminiCompatibleConfig } from './adapters/gemini-compatible';
+import { SeedanceAdapter, type SeedanceConfig } from './adapters/seedance';
 
 // ============================================================================
 // Factory State
@@ -173,6 +181,48 @@ export class AIServiceFactory {
   }
 
   /**
+   * Get a generative AI service instance
+   */
+  getGenerativeService(provider: 'openai-compatible' | 'gemini-compatible' | 'seedance'): GenerativeService {
+    const cacheKey = `generative:${provider}`;
+
+    if (serviceCache.has(cacheKey)) {
+      return serviceCache.get(cacheKey) as GenerativeService;
+    }
+
+    let service: GenerativeService;
+
+    switch (provider) {
+      case 'openai-compatible':
+        if (!this.config.openaiCompatible) {
+          throw new Error('OpenAI-compatible API not configured');
+        }
+        service = new OpenAICompatibleAdapter(this.config.openaiCompatible);
+        break;
+
+      case 'gemini-compatible':
+        if (!this.config.geminiCompatible) {
+          throw new Error('Gemini-compatible API not configured');
+        }
+        service = new GeminiCompatibleAdapter(this.config.geminiCompatible);
+        break;
+
+      case 'seedance':
+        if (!this.config.seedance) {
+          throw new Error('Seedance not configured');
+        }
+        service = new SeedanceAdapter(this.config.seedance);
+        break;
+
+      default:
+        throw new Error(`Unknown generative provider: ${provider}`);
+    }
+
+    serviceCache.set(cacheKey, service);
+    return service;
+  }
+
+  /**
    * Synthesize voice using default or specified provider
    */
   async synthesizeVoice(
@@ -203,6 +253,28 @@ export class AIServiceFactory {
     const provider = params.provider || 'elevenlabs';
     const service = this.getSFXService(provider);
     return service.generate(params);
+  }
+
+  /**
+   * Generate text using default or specified provider
+   */
+  async generateText(
+    params: GenerativeTextParams & { provider?: 'openai-compatible' | 'gemini-compatible' }
+  ): Promise<GenerativeTextResult> {
+    const provider = params.provider || 'openai-compatible';
+    const service = this.getGenerativeService(provider);
+    return service.generateText(params);
+  }
+
+  /**
+   * Generate image using default or specified provider
+   */
+  async generateImage(
+    params: GenerativeImageParams & { provider?: 'openai-compatible' | 'gemini-compatible' }
+  ): Promise<GenerativeImageResult> {
+    const provider = params.provider || 'openai-compatible';
+    const service = this.getGenerativeService(provider);
+    return service.generateImage(params);
   }
 
   /**
@@ -241,13 +313,43 @@ export class AIServiceFactory {
       }
     }
 
+    // Check OpenAI-compatible
+    if (this.config.openaiCompatible) {
+      try {
+        const service = this.getGenerativeService('openai-compatible');
+        results.openaiCompatible = await service.healthCheck();
+      } catch {
+        results.openaiCompatible = { status: 'unhealthy' };
+      }
+    }
+
+    // Check Gemini-compatible
+    if (this.config.geminiCompatible) {
+      try {
+        const service = this.getGenerativeService('gemini-compatible');
+        results.geminiCompatible = await service.healthCheck();
+      } catch {
+        results.geminiCompatible = { status: 'unhealthy' };
+      }
+    }
+
+    // Check Seedance
+    if (this.config.seedance) {
+      try {
+        const service = this.getGenerativeService('seedance');
+        results.seedance = await service.healthCheck();
+      } catch {
+        results.seedance = { status: 'unhealthy' };
+      }
+    }
+
     return results;
   }
 
   /**
    * Check if a specific service is available
    */
-  async isServiceAvailable(type: 'voice' | 'bgm' | 'sfx', provider: string): Promise<boolean> {
+  async isServiceAvailable(type: 'voice' | 'bgm' | 'sfx' | 'generative', provider: string): Promise<boolean> {
     try {
       let service: AIService;
 
@@ -260,6 +362,9 @@ export class AIServiceFactory {
           break;
         case 'sfx':
           service = this.getSFXService(provider as 'elevenlabs');
+          break;
+        case 'generative':
+          service = this.getGenerativeService(provider as 'openai-compatible' | 'gemini-compatible' | 'seedance');
           break;
       }
 
@@ -277,6 +382,9 @@ export class AIServiceFactory {
       gptSovits: !!this.config.gptSovits,
       elevenlabs: !!this.config.elevenlabs,
       minimax: !!this.config.minimax,
+      openaiCompatible: !!this.config.openaiCompatible,
+      geminiCompatible: !!this.config.geminiCompatible,
+      seedance: !!this.config.seedance,
     };
   }
 }
@@ -332,6 +440,36 @@ export function createSFXRequest(params: Partial<SFXParams>): SFXParams {
   };
 }
 
+/**
+ * Create a text generation request
+ */
+export function createTextGenerationRequest(params: Partial<GenerativeTextParams>): GenerativeTextParams {
+  return {
+    prompt: params.prompt || '',
+    model: params.model,
+    maxTokens: params.maxTokens || 2048,
+    temperature: params.temperature ?? 0.7,
+    topP: params.topP,
+    n: params.n || 1,
+    ...params,
+  };
+}
+
+/**
+ * Create an image generation request
+ */
+export function createImageGenerationRequest(params: Partial<GenerativeImageParams>): GenerativeImageParams {
+  return {
+    prompt: params.prompt || '',
+    model: params.model,
+    width: params.width || 1024,
+    height: params.height || 1024,
+    n: params.n || 1,
+    format: params.format || 'url',
+    ...params,
+  };
+}
+
 // ============================================================================
 // Default Configuration from Environment
 // ============================================================================
@@ -358,6 +496,27 @@ export function createConfigFromEnv(): AIServiceConfig {
       ? {
           apiKey: process.env.MINIMAX_API_KEY,
           groupId: process.env.MINIMAX_GROUP_ID,
+        }
+      : undefined,
+    openaiCompatible: process.env.OPENAI_COMPATIBLE_API_URL
+      ? {
+          apiUrl: process.env.OPENAI_COMPATIBLE_API_URL,
+          apiKey: process.env.OPENAI_COMPATIBLE_API_KEY,
+          defaultModel: process.env.OPENAI_COMPATIBLE_DEFAULT_MODEL,
+        }
+      : undefined,
+    geminiCompatible: process.env.GEMINI_COMPATIBLE_API_URL
+      ? {
+          apiUrl: process.env.GEMINI_COMPATIBLE_API_URL,
+          apiKey: process.env.GEMINI_COMPATIBLE_API_KEY,
+          defaultModel: process.env.GEMINI_COMPATIBLE_DEFAULT_MODEL,
+        }
+      : undefined,
+    seedance: process.env.SEEDANCE_API_URL
+      ? {
+          apiUrl: process.env.SEEDANCE_API_URL,
+          apiKey: process.env.SEEDANCE_API_KEY,
+          defaultModel: process.env.SEEDANCE_DEFAULT_MODEL,
         }
       : undefined,
   };

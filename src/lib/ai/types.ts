@@ -119,7 +119,7 @@ export interface AIService {
   /** Unique identifier for the service */
   readonly name: string;
   /** Service provider/type */
-  readonly provider: 'gpt-sovits' | 'elevenlabs' | 'minimax' | 'video';
+  readonly provider: 'gpt-sovits' | 'elevenlabs' | 'minimax' | 'video' | 'openai-compatible' | 'gemini-compatible' | 'seedance';
 
   /**
    * Check if the service is available and properly configured
@@ -235,6 +235,24 @@ export interface AIServiceConfig {
     apiKey: string;
     groupId?: string;
   };
+  /** OpenAI-compatible API configuration */
+  openaiCompatible?: {
+    apiUrl: string;
+    apiKey?: string;
+    defaultModel?: string;
+  };
+  /** Gemini-compatible API configuration */
+  geminiCompatible?: {
+    apiUrl: string;
+    apiKey?: string;
+    defaultModel?: string;
+  };
+  /** Seedance API configuration */
+  seedance?: {
+    apiUrl: string;
+    apiKey?: string;
+    defaultModel?: string;
+  };
 }
 
 /**
@@ -250,4 +268,138 @@ export function isBGMService(service: AIService): service is BGMService {
 
 export function isSFXService(service: AIService): service is SFXService {
   return 'generate' in service && service.provider === 'elevenlabs';
+}
+
+// ============================================================================
+// Generative AI Service (for text, image, video generation - OpenAI, Gemini, Seedance)
+// ============================================================================
+
+/**
+ * Generative AI parameters for text generation
+ */
+export interface GenerativeTextParams {
+  /** Text prompt */
+  prompt: string;
+  /** Model to use */
+  model?: string;
+  /** Maximum tokens to generate */
+  maxTokens?: number;
+  /** Temperature for randomness (0.0 - 2.0) */
+  temperature?: number;
+  /** Top-p sampling parameter */
+  topP?: number;
+  /** Number of responses to generate */
+  n?: number;
+  /** Stop sequences */
+  stop?: string[];
+  /** Additional provider-specific parameters */
+  extraParams?: Record<string, unknown>;
+}
+
+/**
+ * Generative AI parameters for image generation
+ */
+export interface GenerativeImageParams {
+  /** Image prompt */
+  prompt: string;
+  /** Model to use */
+  model?: string;
+  /** Image width in pixels */
+  width?: number;
+  /** Image height in pixels */
+  height?: number;
+  /** Number of images to generate */
+  n?: number;
+  /** Output format */
+  format?: 'url' | 'base64';
+  /** Style preset */
+  style?: string;
+  /** Additional provider-specific parameters */
+  extraParams?: Record<string, unknown>;
+}
+
+/**
+ * Generative AI result for text generation
+ */
+export interface GenerativeTextResult {
+  /** Unique identifier for the generated text */
+  id: string;
+  /** Generated text content */
+  text: string;
+  /** Model that generated the text */
+  model: string;
+  /** Usage statistics */
+  usage?: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  };
+  /** Metadata about the generation */
+  metadata?: Record<string, unknown>;
+  /** Timestamp when the text was generated */
+  createdAt: Date;
+}
+
+/**
+ * Generative AI result for image generation
+ */
+export interface GenerativeImageResult {
+  /** Unique identifier for the generated image */
+  id: string;
+  /** URL or base64 of the generated image */
+  url: string;
+  /** Image format */
+  format: string;
+  /** Width in pixels */
+  width: number;
+  /** Height in pixels */
+  height: number;
+  /** Model that generated the image */
+  model: string;
+  /** Metadata about the generation */
+  metadata?: Record<string, unknown>;
+  /** Timestamp when the image was generated */
+  createdAt: Date;
+}
+
+/**
+ * Generative AI service interface
+ */
+export interface GenerativeService extends AIService {
+  readonly provider: 'openai-compatible' | 'gemini-compatible' | 'seedance';
+
+  /**
+   * Generate text from prompt
+   */
+  generateText(params: GenerativeTextParams): Promise<GenerativeTextResult>;
+
+  /**
+   * Generate image from prompt
+   */
+  generateImage(params: GenerativeImageParams): Promise<GenerativeImageResult>;
+
+  /**
+   * Get available models for this provider
+   */
+  getModels(): Promise<GenerativeModel[]>;
+}
+
+/**
+ * Generative model information
+ */
+export interface GenerativeModel {
+  id: string;
+  name: string;
+  type: 'text' | 'image' | 'video' | 'multimodal';
+  provider: 'openai-compatible' | 'gemini-compatible' | 'seedance';
+  description?: string;
+  capabilities?: string[];
+  maxTokens?: number;
+}
+
+/**
+ * Type guard for GenerativeService
+ */
+export function isGenerativeService(service: AIService): service is GenerativeService {
+  return 'generateText' in service;
 }
