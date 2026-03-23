@@ -17,10 +17,11 @@ export async function GET(request: Request, { params }: RouteParams) {
 
     const { projectId } = await params;
 
-    // Check project ownership
+    // Check project ownership and get info in one query
     const project = db.prepare(`
-      SELECT user_id FROM projects WHERE id = ?
-    `).get(projectId) as { user_id: string } | undefined;
+      SELECT id, user_id, title, status, video_url, cover_image, updated_at
+      FROM projects WHERE id = ?
+    `).get(projectId) as { id: string; user_id: string; title: string; status: string; video_url: string; cover_image: string; updated_at: string } | undefined;
 
     if (!project) {
       return NextResponse.json({ error: '项目不存在' }, { status: 404 });
@@ -33,11 +34,15 @@ export async function GET(request: Request, { params }: RouteParams) {
     // Get pipeline status
     const status = getPipelineStatus(projectId);
 
-    // Get project info
-    const projectInfo = db.prepare(`
-      SELECT id, title, status, video_url, cover_image, updated_at
-      FROM projects WHERE id = ?
-    `).get(projectId) as any;
+    // Build projectInfo from the same result
+    const projectInfo = {
+      id: project.id,
+      title: project.title,
+      status: project.status,
+      video_url: project.video_url,
+      cover_image: project.cover_image,
+      updated_at: project.updated_at,
+    };
 
     // Get scenes
     const scenes = db.prepare(`
