@@ -219,6 +219,7 @@ export default function SettingsPage() {
   const textConfigs = configs.filter((c) => c.provider_type === "text");
   const imageConfigs = configs.filter((c) => c.provider_type === "image");
   const videoConfigs = configs.filter((c) => c.provider_type === "video");
+  const audioConfigs = configs.filter((c) => c.provider_type === "audio");
 
   // Get provider name mappings
   const getProviderName = (providerId: string) => {
@@ -287,7 +288,7 @@ export default function SettingsPage() {
       )}
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="card-soft p-6">
           <div className="flex items-center gap-4">
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
@@ -323,6 +324,19 @@ export default function SettingsPage() {
               <p className="text-muted-foreground text-sm">视频模型</p>
               <p className="text-3xl font-heading font-bold text-foreground">
                 {videoConfigs.length}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="card-soft p-6">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center">
+              <span className="text-2xl">A</span>
+            </div>
+            <div>
+              <p className="text-muted-foreground text-sm">音频模型</p>
+              <p className="text-3xl font-heading font-bold text-foreground">
+                {audioConfigs.length}
               </p>
             </div>
           </div>
@@ -423,6 +437,32 @@ export default function SettingsPage() {
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {videoConfigs.map((config) => (
+              <ModelConfigCard
+                key={config.id}
+                config={config}
+                providerName={getProviderName(config.provider_id)}
+                providerNameZh={getProviderNameZh(config.provider_id)}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onToggleEnabled={handleToggleEnabled}
+                onSetDefault={handleSetDefault}
+                isLoading={actionLoading === config.id}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {audioConfigs.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-xl font-heading font-bold flex items-center gap-2">
+            <span className="w-8 h-8 rounded-lg bg-green-100 text-green-600 flex items-center justify-center text-sm font-bold">
+              A
+            </span>
+            音频模型
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {audioConfigs.map((config) => (
               <ModelConfigCard
                 key={config.id}
                 config={config}

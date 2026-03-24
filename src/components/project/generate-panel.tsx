@@ -37,6 +37,7 @@ export function GeneratePanel({ projectId, projectStatus, config }: GeneratePane
   const [textModels, setTextModels] = useState<ModelConfig[]>([]);
   const [imageModels, setImageModels] = useState<ModelConfig[]>([]);
   const [videoModels, setVideoModels] = useState<ModelConfig[]>([]);
+  const [audioModels, setAudioModels] = useState<ModelConfig[]>([]);
 
   // Config state
   const [voiceModel, setVoiceModel] = useState(config?.voice_model || "gpt-sovits");
@@ -54,6 +55,7 @@ export function GeneratePanel({ projectId, projectStatus, config }: GeneratePane
           setTextModels(configs.filter((c: ModelConfig) => c.provider_type === 'text'));
           setImageModels(configs.filter((c: ModelConfig) => c.provider_type === 'image'));
           setVideoModels(configs.filter((c: ModelConfig) => c.provider_type === 'video'));
+          setAudioModels(configs.filter((c: ModelConfig) => c.provider_type === 'audio'));
         }
       } catch (error) {
         console.error('Error fetching model configs:', error);
@@ -211,17 +213,17 @@ export function GeneratePanel({ projectId, projectStatus, config }: GeneratePane
             className="w-full h-9 px-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             disabled={isProcessing}
           >
-            {textModels.length > 0 ? (
-              textModels.map((model) => (
+            {audioModels.length > 0 ? (
+              audioModels.map((model) => (
                 <optgroup key={model.id} label={model.name}>
                   {model.model_ids && model.model_ids.length > 0 ? (
                     model.model_ids.map((id) => (
-                      <option key={`${model.id}-${id}`} value={`${model.id}:${id}`}>
+                      <option key={`${model.id}-${id}`} value={`${model.provider_id}:${id}`}>
                         {id}
                       </option>
                     ))
                   ) : (
-                    <option key={model.id} value={model.id}>
+                    <option key={model.provider_id} value={model.provider_id}>
                       {model.name} (默认)
                     </option>
                   )}
@@ -229,7 +231,7 @@ export function GeneratePanel({ projectId, projectStatus, config }: GeneratePane
               ))
             ) : (
               <>
-                <option value="" disabled>请先在设置中配置文本模型</option>
+                <option value="" disabled>请先在设置中配置音频模型</option>
                 {[
                   { value: "gpt-sovits", label: "GPT-SoVITS" },
                   { value: "elevenlabs", label: "ElevenLabs" },
@@ -254,35 +256,24 @@ export function GeneratePanel({ projectId, projectStatus, config }: GeneratePane
             className="w-full h-9 px-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             disabled={isProcessing}
           >
-            {imageModels.length > 0 ? (
-              imageModels.map((model) => (
+            {audioModels.length > 0 ? (
+              audioModels.map((model) => (
                 <optgroup key={model.id} label={model.name}>
                   {model.model_ids && model.model_ids.length > 0 ? (
                     model.model_ids.map((id) => (
-                      <option key={`${model.id}-${id}`} value={`${model.id}:${id}`}>
+                      <option key={`${model.id}-${id}`} value={`${model.provider_id}:${id}`}>
                         {id}
                       </option>
                     ))
                   ) : (
-                    <option key={model.id} value={model.id}>
+                    <option key={model.provider_id} value={model.provider_id}>
                       {model.name} (默认)
                     </option>
                   )}
                 </optgroup>
               ))
             ) : (
-              <>
-                <option value="" disabled>请先在设置中配置图像模型</option>
-                {[
-                  { value: "minimax", label: "MiniMax" },
-                  { value: "suno", label: "Suno" },
-                  { value: "musicgen", label: "MusicGen" },
-                ].map((model) => (
-                  <option key={model.value} value={model.value}>
-                    {model.label}
-                  </option>
-                ))}
-              </>
+              <option value="" disabled>请先在设置中配置音频模型</option>
             )}
           </select>
         </div>
@@ -297,34 +288,24 @@ export function GeneratePanel({ projectId, projectStatus, config }: GeneratePane
             className="w-full h-9 px-3 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
             disabled={isProcessing}
           >
-            {videoModels.length > 0 ? (
-              videoModels.map((model) => (
+            {audioModels.length > 0 ? (
+              audioModels.map((model) => (
                 <optgroup key={model.id} label={model.name}>
                   {model.model_ids && model.model_ids.length > 0 ? (
                     model.model_ids.map((id) => (
-                      <option key={`${model.id}-${id}`} value={`${model.id}:${id}`}>
+                      <option key={`${model.id}-${id}`} value={`${model.provider_id}:${id}`}>
                         {id}
                       </option>
                     ))
                   ) : (
-                    <option key={model.id} value={model.id}>
+                    <option key={model.provider_id} value={model.provider_id}>
                       {model.name} (默认)
                     </option>
                   )}
                 </optgroup>
               ))
             ) : (
-              <>
-                <option value="" disabled>请先在设置中配置视频模型</option>
-                {[
-                  { value: "elevenlabs", label: "ElevenLabs" },
-                  { value: "aires", label: "AI RES" },
-                ].map((model) => (
-                  <option key={model.value} value={model.value}>
-                    {model.label}
-                  </option>
-                ))}
-              </>
+              <option value="" disabled>请先在设置中配置音频模型</option>
             )}
           </select>
         </div>

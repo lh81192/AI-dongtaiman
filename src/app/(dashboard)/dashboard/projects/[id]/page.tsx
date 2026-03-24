@@ -7,6 +7,7 @@ import { formatDate, formatDuration } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { GeneratePanel } from "@/components/project/generate-panel";
+import { SceneList } from "@/components/project/scene-list";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -107,6 +108,46 @@ export default async function ProjectDetailPage({ params }: PageProps) {
 
   const statusInfo = statusMap[project.status] || statusMap.pending;
 
+  // Fetch scenes data
+  const rawScenes = db.prepare(`
+    SELECT s.*,
+      kf1.image_url as first_frame_url,
+      kf2.image_url as last_frame_url,
+      vc.video_url as clip_video_url,
+      vc.status as clip_status
+    FROM scenes s
+    LEFT JOIN key_frames kf1 ON kf1.scene_id = s.id AND kf1.frame_type = 'first'
+    LEFT JOIN key_frames kf2 ON kf2.scene_id = s.id AND kf2.frame_type = 'last'
+    LEFT JOIN video_clips vc ON vc.scene_id = s.id
+    WHERE s.project_id = ?
+    ORDER BY s.sequence_index
+  `).all(id) as any[];
+
+  // Derive scene status
+  function deriveSceneStatus(scene: any): "pending" | "analyzed" | "frames_generated" | "video_generated" {
+    if (scene.clip_status === "completed" || scene.clip_video_url) return "video_generated";
+    if (scene.frames_status === "completed") return "frames_generated";
+    if (scene.scene_description) return "analyzed";
+    return "pending";
+  }
+
+  const scenes = rawScenes.map((s) => ({
+    id: s.id,
+    pageIndex: s.page_index,
+    imagePath: s.image_path || "",
+    rawText: s.raw_text || "",
+    sceneDescription: s.scene_description || null,
+    cameraType: s.camera_type || null,
+    dialogues: s.dialogues ? JSON.parse(s.dialogues) : null,
+    mood: s.mood || null,
+    status: deriveSceneStatus(s),
+    framesStatus: s.frames_status || "pending",
+    firstFrameUrl: s.first_frame_url || undefined,
+    lastFrameUrl: s.last_frame_url || undefined,
+    videoStatus: s.clip_status || undefined,
+    videoUrl: s.clip_video_url || undefined,
+  }));
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -136,6 +177,9 @@ export default async function ProjectDetailPage({ params }: PageProps) {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column - Project Info */}
         <div className="lg:col-span-2 space-y-6">
+          {/* Scenes Management */}
+          <SceneList projectId={id} initialScenes={scenes} />
+
           {/* Video Player */}
           {project.status === "completed" && project.video_url && (
             <Card>

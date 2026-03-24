@@ -28,7 +28,7 @@ import {
   ElevenLabsSFXAdapter,
   type ElevenLabsConfig,
 } from './adapters/elevenlabs';
-import { MiniMaxAdapter, type MiniMaxConfig } from './adapters/minimax';
+import { MiniMaxAdapter, type MiniMaxConfig, createMiniMaxUnifiedService } from './adapters/minimax';
 import { OpenAICompatibleAdapter, type OpenAICompatibleConfig } from './adapters/openai-compatible';
 import { GeminiCompatibleAdapter, type GeminiCompatibleConfig } from './adapters/gemini-compatible';
 import { SeedanceAdapter, type SeedanceConfig, createSeedanceService } from './adapters/seedance';
@@ -553,6 +553,14 @@ export async function createServiceFromUserConfig(configId: string, userId: stri
 
   switch (protocol) {
     case 'openai':
+      // ElevenLabs audio provider
+      if (config.provider_id === 'elevenlabs' && provider_type === 'audio') {
+        return createElevenLabsService({
+          apiKey: config.api_key,
+          baseUrl: config.api_url,
+        });
+      }
+      // Generic OpenAI-compatible
       return createOpenAICompatibleService({
         apiUrl: config.api_url,
         apiKey: config.api_key,
@@ -582,6 +590,13 @@ export async function createServiceFromUserConfig(configId: string, userId: stri
           defaultModel: config.model_ids?.[0],
         });
       }
+      // MiniMax 音频 (TTS / BGM / SFX)
+      if (config.provider_id === 'minimax-tts' || config.provider_id === 'minimax-audio') {
+        return createMiniMaxUnifiedService({
+          apiKey: config.api_key,
+          baseUrl: config.api_url,
+        });
+      }
       // 默认使用 OpenAI 兼容格式
       return createOpenAICompatibleService({
         apiUrl: config.api_url,
@@ -597,7 +612,7 @@ export async function createServiceFromUserConfig(configId: string, userId: stri
 /**
  * 获取用户指定类型的默认配置
  */
-export function getDefaultConfig(userId: string, providerType: 'text' | 'image' | 'video') {
+export function getDefaultConfig(userId: string, providerType: 'text' | 'image' | 'video' | 'audio') {
   const config = db.prepare(`
     SELECT * FROM user_model_configs
     WHERE user_id = ? AND provider_type = ? AND enabled = 1 AND is_default = 1

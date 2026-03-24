@@ -402,3 +402,117 @@ export class MiniMaxAdapter implements BGMService {
 export function createMiniMaxService(config: MiniMaxConfig): MiniMaxAdapter {
   return new MiniMaxAdapter(config);
 }
+
+// ============================================================================
+// MiniMax TTS Adapter
+// ============================================================================
+
+export interface MiniMaxTTSConfig {
+  apiKey: string;
+  baseUrl?: string;
+  groupId?: string;
+  defaultVoice?: string;
+}
+
+export class MiniMaxTTSAdapter {
+  readonly name = 'minimax-tts';
+  readonly provider = 'minimax-tts' as const;
+  private config: MiniMaxTTSConfig;
+
+  constructor(config: MiniMaxTTSConfig) {
+    this.config = {
+      baseUrl: 'https://api.minimax.chat/v1',
+      defaultVoice: 'female-tianmei',
+      ...config,
+    };
+  }
+
+  async synthesize(opts: { text: string; voiceId?: string }): Promise<{ url?: string; duration?: number }> {
+    const voice = opts.voiceId || this.config.defaultVoice || 'female-tianmei';
+    try {
+      const response = await fetch(`${this.config.baseUrl}/t2a_v2`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.config.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'speech-02-hd',
+          text: opts.text,
+          voice_setting: {
+            voice_id: voice,
+          },
+          audio_setting: {
+            sample_rate: 32000,
+            format: 'mp3',
+            bitrate: 128000,
+          },
+          ...(this.config.groupId && { group_id: this.config.groupId }),
+        }),
+      });
+
+      if (!response.ok) {
+        console.error('[MiniMaxTTS] API error:', await response.text());
+        return { url: undefined, duration: undefined };
+      }
+
+      const data = await response.json();
+      const audioUrl = data.data?.audio_file?.audio_id
+        ? `${this.config.baseUrl}/t2a_v2/query?task_id=${data.data.audio_file.audio_id}`
+        : data.data?.audio_url;
+
+      return {
+        url: audioUrl,
+        duration: data.data?.duration || Math.ceil(opts.text.length / 10),
+      };
+    } catch (error) {
+      console.error('[MiniMaxTTS] Synthesis error:', error);
+      return { url: undefined, duration: undefined };
+    }
+  }
+
+  async isAvailable(): Promise<boolean> {
+    return !!this.config.apiKey;
+  }
+}
+
+export function createMiniMaxTTSService(config: MiniMaxTTSConfig): MiniMaxTTSAdapter {
+  return new MiniMaxTTSAdapter(config);
+}
+
+// ============================================================================
+// MiniMax Unified Adapter (BGM + TTS)
+// ============================================================================
+
+export class MiniMaxUnifiedAdapter {
+  readonly name = 'minimax';
+  readonly provider = 'minimax' as const;
+  private bgmAdapter: MiniMaxAdapter;
+  private ttsAdapter: MiniMaxTTSAdapter;
+
+  constructor(config: { apiKey: string; baseUrl?: string; groupId?: string; defaultVoice?: string }) {
+    this.bgmAdapter = new MiniMaxAdapter({ apiKey: config.apiKey, baseUrl: config.baseUrl, groupId: config.groupId });
+    this.ttsAdapter = new MiniMaxTTSAdapter({ apiKey: config.apiKey, baseUrl: config.baseUrl, groupId: config.groupId, defaultVoice: config.defaultVoice });
+  }
+
+  async generateBGM?(opts: { prompt: string; duration?: number; mood?: string[] }): Promise<{ url?: string }> {
+    return this.bgmAdapter.generate(opts as any);
+  }
+
+  async synthesize?(opts: { text: string; voiceId?: string }): Promise<{ url?: string; duration?: number }> {
+    return this.ttsAdapter.synthesize(opts);
+  }
+
+  async generateSFX?(opts: { prompt: string; duration?: number }): Promise<{ url?: string }> {
+    // MiniMax doesn't have native SFX, return empty
+    return { url: undefined };
+  }
+
+  async isAvailable(): Promise<boolean> {
+    return this.bgmAdapter.isAvailable();
+  }
+}
+
+export function createMiniMaxUnifiedService(config: { apiKey?: string; baseUrl?: string; groupId?: string; defaultVoice?: string }): MiniMaxUnifiedAdapter {
+  return new MiniMaxUnifiedAdapter({ apiKey: config.apiKey || '', baseUrl: config.baseUrl, groupId: config.groupId, defaultVoice: config.defaultVoice });
+}

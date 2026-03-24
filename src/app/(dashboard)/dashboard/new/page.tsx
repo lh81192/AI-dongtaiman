@@ -67,7 +67,7 @@ export default function NewProjectPage() {
       }
 
       // Redirect to project detail or dashboard
-      router.push(`/dashboard/project/${data.project.id}`);
+      router.push(`/dashboard/projects/${data.project.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "创建作品失败，请稍后重试");
     } finally {

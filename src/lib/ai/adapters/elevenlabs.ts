@@ -500,3 +500,49 @@ export function createElevenLabsVoiceService(config: ElevenLabsConfig): ElevenLa
 export function createElevenLabsSFXService(config: ElevenLabsConfig): ElevenLabsSFXAdapter {
   return new ElevenLabsSFXAdapter(config);
 }
+
+// ============================================================================
+// Unified ElevenLabs Adapter (voice + BGM + SFX)
+// ============================================================================
+
+export interface ElevenLabsUnifiedConfig {
+  apiKey: string;
+  baseUrl?: string;
+}
+
+export class ElevenLabsUnifiedAdapter {
+  readonly name = 'elevenlabs';
+  readonly provider = 'elevenlabs' as const;
+  private voiceAdapter: ElevenLabsVoiceAdapter;
+  private sfxAdapter: ElevenLabsSFXAdapter;
+
+  constructor(config: ElevenLabsUnifiedConfig) {
+    const innerConfig: ElevenLabsConfig = {
+      apiKey: config.apiKey,
+      baseUrl: config.baseUrl || 'https://api.elevenlabs.io/v1',
+    };
+    this.voiceAdapter = new ElevenLabsVoiceAdapter(innerConfig);
+    this.sfxAdapter = new ElevenLabsSFXAdapter(innerConfig);
+  }
+
+  async synthesize(opts: { text: string; voiceId?: string; emotion?: string }): Promise<{ url?: string; duration?: number }> {
+    return this.voiceAdapter.synthesize(opts as any);
+  }
+
+  async generateBGM?(opts: { prompt: string; duration?: number; mood?: string[] }): Promise<{ url?: string }> {
+    // ElevenLabs doesn't have native BGM, return empty
+    return { url: undefined };
+  }
+
+  async generateSFX?(opts: { prompt: string; duration?: number }): Promise<{ url?: string }> {
+    return this.sfxAdapter.generateSFX(opts as any);
+  }
+
+  async isAvailable(): Promise<boolean> {
+    return this.voiceAdapter.isAvailable();
+  }
+}
+
+export function createElevenLabsService(config: { apiKey?: string; baseUrl?: string }): ElevenLabsUnifiedAdapter {
+  return new ElevenLabsUnifiedAdapter({ apiKey: config.apiKey || '', baseUrl: config.baseUrl });
+}

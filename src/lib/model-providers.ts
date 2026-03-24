@@ -3,7 +3,7 @@
  * 统一管理支持的模型供应商和协议
  */
 
-export type ProviderType = 'text' | 'image' | 'video';
+export type ProviderType = 'text' | 'image' | 'video' | 'audio';
 export type Protocol = 'domestic' | 'openai' | 'gemini' | 'seedance' | 'google';
 
 export interface ModelProvider {
@@ -231,6 +231,51 @@ export const imageProviders: ModelProvider[] = [
   },
 ];
 
+// 音频模型供应商
+export const audioProviders: ModelProvider[] = [
+  // 国产协议
+  {
+    id: 'minimax-tts',
+    name: 'MiniMax TTS',
+    nameZh: 'MiniMax 语音合成',
+    type: 'audio',
+    protocol: 'domestic',
+    defaultApiUrl: 'https://api.minimax.chat/v1',
+    modelListEndpoint: '/models',
+    description: 'MiniMax 海螺语音合成 (TTS)',
+  },
+  {
+    id: 'minimax-audio',
+    name: 'MiniMax Audio',
+    nameZh: 'MiniMax 音效',
+    type: 'audio',
+    protocol: 'domestic',
+    defaultApiUrl: 'https://api.minimax.chat/v1',
+    description: 'MiniMax 音效生成',
+  },
+  // OpenAI 协议
+  {
+    id: 'elevenlabs',
+    name: 'ElevenLabs',
+    nameZh: 'ElevenLabs',
+    type: 'audio',
+    protocol: 'openai',
+    defaultApiUrl: 'https://api.elevenlabs.io/v1',
+    modelListEndpoint: '/voices',
+    description: 'ElevenLabs 语音合成和音效',
+  },
+  // Gemini 协议
+  {
+    id: 'google-tts',
+    name: 'Google TTS',
+    nameZh: 'Google 语音合成',
+    type: 'audio',
+    protocol: 'gemini',
+    defaultApiUrl: 'https://texttospeech.googleapis.com/v1',
+    description: 'Google 文字转语音',
+  },
+];
+
 // 视频模型供应商
 export const videoProviders: ModelProvider[] = [
   // Seedance 协议
@@ -279,7 +324,7 @@ export const videoProviders: ModelProvider[] = [
 ];
 
 // 所有供应商汇总
-export const allProviders = [...textProviders, ...imageProviders, ...videoProviders];
+export const allProviders = [...textProviders, ...imageProviders, ...videoProviders, ...audioProviders];
 
 // 根据类型获取供应商
 export function getProvidersByType(type: ProviderType): ModelProvider[] {
@@ -310,4 +355,5 @@ export const typeNames: Record<ProviderType, string> = {
   text: '文本模型',
   image: '图像模型',
   video: '视频模型',
+  audio: '音频模型',
 };
