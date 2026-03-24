@@ -148,7 +148,7 @@ export function initDb(): void {
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL,
       provider_id TEXT NOT NULL,
-      provider_type TEXT NOT NULL CHECK(provider_type IN ('text', 'image', 'video')),
+      provider_type TEXT NOT NULL CHECK(provider_type IN ('text', 'image', 'video', 'audio')),
       protocol TEXT NOT NULL CHECK(protocol IN ('domestic', 'openai', 'gemini', 'seedance', 'google')),
       name TEXT NOT NULL,
       api_url TEXT,
