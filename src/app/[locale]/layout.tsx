@@ -10,6 +10,7 @@ import {
 import "../globals.css";
 import { FingerprintProvider } from "@/components/fingerprint-provider";
 import { Toaster } from "sonner";
+import { ThemeProvider } from "@/components/theme-provider";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -48,13 +49,15 @@ export default async function LocaleLayout({
   return (
     <html
       lang={locale}
-      className={`dark ${playfair.variable} ${karla.variable} ${jetbrains.variable}`}
+      className={`${playfair.variable} ${karla.variable} ${jetbrains.variable}`}
       suppressHydrationWarning
     >
-      <body className="min-h-screen bg-background font-sans antialiased">
+      <body className="min-h-screen bg-background text-foreground font-sans antialiased">
         <NextIntlClientProvider messages={messages}>
-          <FingerprintProvider>{children}</FingerprintProvider>
-          <Toaster position="top-center" theme="dark" />
+          <FingerprintProvider>
+            <ThemeProvider>{children}</ThemeProvider>
+          </FingerprintProvider>
+          <Toaster position="top-center" theme="light" />
         </NextIntlClientProvider>
       </body>
     </html>

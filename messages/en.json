@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "AI Comic Builder",
+    "appName": "SketchLive",
     "create": "Create",
     "save": "Save",
     "delete": "Delete",
@@ -18,6 +18,9 @@
   "dashboard": {
     "title": "My Projects",
     "newProject": "New Project",
+    "projectSource": "Input Source",
+    "projectSourceScript": "Script",
+    "projectSourceEpub": "EPUB",
     "noProjects": "No projects yet. Click the button above to create one.",
     "deleteConfirmTitle": "Delete Project",
     "deleteConfirmDesc": "Are you sure you want to delete \"{title}\"? This action cannot be undone and all related data will be permanently deleted.",
@@ -173,6 +176,11 @@
     "complete": "Import complete!",
     "newImport": "New Import",
     "retry": "Retry",
+    "retryHintParse": "Re-upload the file before retrying this step.",
+    "retryHintModelChanged": "You can retry this step directly on the current page.",
+    "retryHintMissingText": "Parsed text is unavailable. Please upload and parse the file again first.",
+    "retryHintMissingCharacters": "Character results are unavailable. Please retry character extraction first.",
+    "retryHintMissingEpisodes": "Episode results are unavailable. Please retry auto-splitting first.",
     "showAll": "Show All",
     "main": "Main",
     "guest": "Guest",
@@ -182,7 +190,27 @@
       "characters": "Extract Characters",
       "split": "Auto Split",
       "generate": "Create Episodes"
-    }
+    },
+    "epubTitle": "Import EPUB",
+    "epubUpload": "Upload EPUB",
+    "epubDropHint": "Click or drag an EPUB file here",
+    "epubSupportedFormats": "Supports EPUB — max 200MB",
+    "epubFileTooLarge": "File too large — max 200MB",
+    "epubUploadComplete": "EPUB upload complete",
+    "epubBookInfo": "Book Info",
+    "epubPagesTitle": "Page Gallery",
+    "epubPagesHint": "After upload, select pages, reorder them, and import full pages into the storyboard.",
+    "epubSelectedCount": "Selected {selected} / {total} pages",
+    "epubPagesSaved": "Page selection and order saved",
+    "epubNoPages": "No EPUB pages uploaded yet",
+    "epubNoSelectedPages": "Select at least one page",
+    "epubCharactersTitle": "Character Info",
+    "epubCharactersHint": "Manually enter character names, descriptions, and visual hints. They will be created during storyboard import.",
+    "epubAddCharacter": "Add Character",
+    "epubNoCharacters": "No characters yet. Add one from the top right.",
+    "epubImportStoryboard": "Import to Storyboard",
+    "epubImportComplete": "Imported to storyboard",
+    "epubOpenStoryboard": "Open Storyboard"
   },
   "uploadScript": {
     "title": "Upload Script",
@@ -219,5 +247,122 @@
     "languageModels": "Language Models",
     "imageModels": "Image Models",
     "videoModels": "Video Models"
+  },
+  "landing": {
+    "brand": "SketchLive",
+    "tagline": "From script to storyboard to video",
+    "eyebrow": "AI-native comic production workflow",
+    "login": "Login",
+    "register": "Register",
+    "openApp": "Open App",
+    "admin": "Admin",
+    "hero": {
+      "title": "Turn scripts and EPUBs into AI-produced comic videos.",
+      "description": "AI Comic Builder helps you parse stories, extract characters, generate frames, build video prompts, and render short-form comic videos inside one production workspace.",
+      "primaryCta": "Create your account",
+      "secondaryCta": "Sign in"
+    },
+    "stats": {
+      "items": [
+        { "value": "Script → Video", "label": "One integrated workflow" },
+        { "value": "Multi-model", "label": "Text, image, and video providers" },
+        { "value": "Episode-ready", "label": "Built for serialized production" }
+      ]
+    },
+    "preview": {
+      "title": "Designed for repeatable production",
+      "description": "Move from idea to publishable assets without stitching tools together by hand.",
+      "items": [
+        { "title": "Script parsing", "description": "Break raw scripts into structured episodes, shots, and character entities." },
+        { "title": "Storyboard generation", "description": "Generate keyframes, scene references, and prompt-ready shot descriptions." },
+        { "title": "Video pipeline", "description": "Create video prompts, render clips, and assemble output for each episode." }
+      ]
+    },
+    "features": {
+      "title": "Core product capabilities",
+      "description": "Everything needed to operate an AI comic-to-video pipeline from one dashboard.",
+      "items": [
+        { "title": "Story understanding", "description": "Parse scripts or EPUB content into projects, episodes, and story beats." },
+        { "title": "Character consistency", "description": "Manage main and guest characters with descriptions and reference imagery." },
+        { "title": "Frame generation", "description": "Create keyframes and scene reference frames with configurable image models." },
+        { "title": "Video generation", "description": "Produce shot videos from prompts and stitch them into final episode outputs." }
+      ]
+    },
+    "workflow": {
+      "title": "How the workflow fits together",
+      "description": "The app is organized around the actual production pipeline instead of isolated generators.",
+      "items": [
+        { "title": "1. Import and structure", "description": "Start from a script or EPUB, then generate project structure, episodes, and shot breakdowns." },
+        { "title": "2. Generate visual assets", "description": "Create characters, first frames, last frames, and scene references for each shot." },
+        { "title": "3. Render and assemble", "description": "Generate video prompts, render clips with supported models, and assemble the final episode." }
+      ]
+    },
+    "cta": {
+      "title": "Start building your production workspace",
+      "description": "Create an account to save projects, manage assets, and continue your pipeline across sessions.",
+      "primary": "Get started",
+      "secondary": "I already have an account"
+    }
+  },
+  "auth": {
+    "brand": "SketchLive",
+    "email": "Email",
+    "password": "Password",
+    "passwordPlaceholder": "At least 8 characters",
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "loginEyebrow": "Welcome back",
+    "registerEyebrow": "Create your workspace",
+    "loginTitle": "Sign in to continue your projects.",
+    "registerTitle": "Create an account for AI Comic Builder.",
+    "loginDescription": "Access your saved projects, storyboard pipeline, and model settings from one secure workspace.",
+    "registerDescription": "Create a real account to keep your projects, claim earlier anonymous work, and continue production across devices.",
+    "loginCardDescription": "Enter your email and password to open your workspace.",
+    "registerCardDescription": "Use email and password sign-up to start managing your projects.",
+    "noAccount": "Don’t have an account?",
+    "haveAccount": "Already have an account?",
+    "unknownError": "Something went wrong. Please try again.",
+    "networkError": "Network error. Please try again."
+  },
+  "admin": {
+    "brand": "AI Comic Builder Admin",
+    "eyebrow": "Admin access",
+    "title": "Sign in to the admin console.",
+    "description": "Use the independent admin password to review platform health, user growth, task activity, and storage usage.",
+    "password": "Admin password",
+    "passwordPlaceholder": "Enter the admin password",
+    "login": "Enter admin",
+    "logout": "Logout",
+    "loginCardDescription": "This area is isolated from normal user accounts.",
+    "disabledTitle": "Admin login unavailable",
+    "disabledDescription": "Admin mode is currently disabled.",
+    "disabledHint": "Set ADMIN_PASSWORD to enable the admin console.",
+    "overviewTitle": "Admin overview",
+    "overviewSubtitle": "Read-only operations dashboard",
+    "overviewDescription": "This MVP surfaces application-level operational metrics without mixing admin access into normal user accounts.",
+    "taskStatusTitle": "Task queue status",
+    "taskStatusDescription": "Current counts for async work tracked by the pipeline.",
+    "importStatusTitle": "Import pipeline status",
+    "importStatusDescription": "Latest import log counts grouped by status.",
+    "storageTitle": "Storage usage",
+    "storageDescription": "Disk usage measured from the database file and upload directory.",
+    "modelAccessTitle": "Model availability",
+    "modelAccessDescription": "Environment-level model connectivity and configured ingestion volume.",
+    "usersListTitle": "Latest users",
+    "usersListDescription": "Most recently registered accounts.",
+    "projectsListTitle": "Latest projects",
+    "projectsListDescription": "Newest project records with owner and status.",
+    "failedTasksTitle": "Recent failed tasks",
+    "failedTasksDescription": "Newest failed pipeline tasks for quick inspection.",
+    "recentActivityTitle": "Recent activity",
+    "recentActivityDescription": "Newest project and task records in the system.",
+    "emptyUsers": "No users yet.",
+    "emptyProjects": "No projects yet.",
+    "emptyFailedTasks": "No failed tasks right now.",
+    "openProject": "Open project",
+    "emptyActivity": "No recent activity yet.",
+    "unknownError": "Something went wrong. Please try again.",
+    "networkError": "Network error. Please try again."
   }
 }

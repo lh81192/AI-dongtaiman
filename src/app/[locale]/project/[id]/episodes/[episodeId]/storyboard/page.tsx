@@ -5,8 +5,7 @@ import { useModelStore } from "@/stores/model-store";
 import { ShotCard } from "@/components/editor/shot-card";
 import { Button } from "@/components/ui/button";
 import { useTranslations, useLocale } from "next-intl";
-import { useState, useEffect, useRef } from "react";
-import type { StoryboardVersion } from "@/stores/project-store";
+import { useState, useRef, useMemo } from "react";
 import { useModelGuard } from "@/hooks/use-model-guard";
 import {
   Film,
@@ -35,7 +34,7 @@ import Link from "next/link";
 export default function EpisodeStoryboardPage() {
   const t = useTranslations();
   const locale = useLocale();
-  const { project, fetchProject } = useProjectStore();
+  const { project, fetchProject, currentEpisodeId } = useProjectStore();
   const getModelConfig = useModelStore((s) => s.getModelConfig);
   const [generating, setGenerating] = useState(false);
   const [generatingFrames, setGeneratingFrames] = useState(false);
@@ -47,37 +46,56 @@ export default function EpisodeStoryboardPage() {
   const [generatingVideosOverwrite, setGeneratingVideosOverwrite] = useState(false);
   const [videoRatio, setVideoRatio] = useState("16:9");
   const [selectedVersionId, setSelectedVersionId] = useState<string | null>(null);
-  const [versions, setVersions] = useState<StoryboardVersion[]>([]);
   const [openDrawerShotId, setOpenDrawerShotId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"list" | "kanban">("list");
+  const [viewModeOverride, setViewModeOverride] = useState<"list" | "kanban" | null>(null);
   const [versionDropdownOpen, setVersionDropdownOpen] = useState(false);
   const versionDropdownRef = useRef<HTMLDivElement>(null);
 
+  const versions = project?.versions ?? [];
+  const viewMode = useMemo<"list" | "kanban">(() => {
+    if (viewModeOverride) return viewModeOverride;
+    if (typeof window === "undefined" || !project?.id) return "list";
+    const stored = window.localStorage.getItem(`storyboardView:${project.id}`);
+    return stored === "kanban" ? "kanban" : "list";
+  }, [viewModeOverride, project?.id]);
+
+  const activeVersionId = selectedVersionId ?? versions[0]?.id ?? null;
+
   function switchView(mode: "list" | "kanban") {
-    setViewMode(mode);
+    setViewModeOverride(mode);
     if (project) localStorage.setItem(`storyboardView:${project.id}`, mode);
+  }
+
+  function handleSelectVersion(versionId: string) {
+    setSelectedVersionId(versionId);
+    fetchProject(project!.id, currentEpisodeId ?? undefined, versionId);
+  }
+
+  function handleOpenLatestVersion() {
+    setSelectedVersionId(null);
+    fetchProject(project!.id, currentEpisodeId ?? undefined);
+  }
+
+  function versionIsActive(versionId: string) {
+    return activeVersionId === versionId;
+  }
+
+  function versionLabel(versionId: string) {
+    return versions.find((version) => version.id === versionId)?.label;
+  }
+
+  function previewHref() {
+    const base = currentEpisodeId
+      ? `/${locale}/project/${project!.id}/episodes/${currentEpisodeId}/preview`
+      : `/${locale}/project/${project!.id}/preview`;
+
+    return activeVersionId ? `${base}?versionId=${activeVersionId}` : base;
   }
 
   const textGuard = useModelGuard("text");
   const imageGuard = useModelGuard("image");
   const videoGuard = useModelGuard("video");
 
-  useEffect(() => {
-    if (!project?.id) return;
-    const stored = localStorage.getItem(`storyboardView:${project.id}`);
-    if (stored === "list" || stored === "kanban") setViewMode(stored);
-  }, [project?.id]);
-
-  useEffect(() => {
-    if (!project?.versions) return;
-    setVersions(project.versions);
-    setSelectedVersionId((current) => {
-      if (current === null && project.versions!.length > 0) {
-        return project.versions![0].id;
-      }
-      return current;
-    });
-  }, [project?.versions]);
 
   if (!project) return null;
 
@@ -129,7 +147,7 @@ export default function EpisodeStoryboardPage() {
         body: JSON.stringify({
           action: "shot_split",
           modelConfig: getModelConfig(),
-          episodeId: useProjectStore.getState().currentEpisodeId,
+          episodeId: currentEpisodeId ?? undefined,
         }),
       });
 
@@ -147,7 +165,7 @@ export default function EpisodeStoryboardPage() {
 
     setGenerating(false);
     setSelectedVersionId(null);
-    await fetchProject(project.id, useProjectStore.getState().currentEpisodeId!);
+    await fetchProject(project.id, currentEpisodeId ?? undefined);
   }
 
   async function handleBatchGenerateFrames(overwrite = false) {
@@ -164,7 +182,7 @@ export default function EpisodeStoryboardPage() {
           action: "batch_frame_generate",
           payload: { ratio: videoRatio, overwrite, versionId: selectedVersionId },
           modelConfig: getModelConfig(),
-          episodeId: useProjectStore.getState().currentEpisodeId,
+          episodeId: currentEpisodeId ?? undefined,
         }),
       });
       const data = await response.json() as { results: Array<{ status: string }> };
@@ -178,7 +196,7 @@ export default function EpisodeStoryboardPage() {
 
     setGeneratingFramesOverwrite(false);
     setGeneratingFrames(false);
-    fetchProject(project.id, useProjectStore.getState().currentEpisodeId!);
+    fetchProject(project.id, currentEpisodeId ?? undefined);
   }
 
   async function handleBatchGenerateVideos(overwrite = false) {
@@ -195,11 +213,16 @@ export default function EpisodeStoryboardPage() {
           action: "batch_video_generate",
           payload: { ratio: videoRatio, overwrite, versionId: selectedVersionId },
           modelConfig: getModelConfig(),
-          episodeId: useProjectStore.getState().currentEpisodeId,
+          episodeId: currentEpisodeId ?? undefined,
         }),
       });
-      const data = await response.json() as { results: Array<{ status: string }> };
-      if (data.results?.some((r) => r.status === "error")) {
+      const data = await response.json() as {
+        results: Array<{ status: string; error?: string; sequence?: number }>;
+      };
+      const firstError = data.results?.find((r) => r.status === "error");
+      if (firstError?.error) {
+        toast.error(firstError.error);
+      } else if (firstError) {
         toast.warning(t("common.batchPartialFailed"));
       }
     } catch (err) {
@@ -209,7 +232,7 @@ export default function EpisodeStoryboardPage() {
 
     setGeneratingVideosOverwrite(false);
     setGeneratingVideos(false);
-    fetchProject(project.id, useProjectStore.getState().currentEpisodeId!);
+    fetchProject(project.id, currentEpisodeId ?? undefined);
   }
 
   async function handleBatchGenerateSceneFrames(overwrite = false) {
@@ -226,7 +249,7 @@ export default function EpisodeStoryboardPage() {
           action: "batch_scene_frame",
           payload: { overwrite, versionId: selectedVersionId },
           modelConfig: getModelConfig(),
-          episodeId: useProjectStore.getState().currentEpisodeId,
+          episodeId: currentEpisodeId ?? undefined,
         }),
       });
       const data = await response.json() as { results: Array<{ status: string }> };
@@ -240,7 +263,7 @@ export default function EpisodeStoryboardPage() {
 
     setSceneFramesOverwrite(false);
     setGeneratingSceneFrames(false);
-    fetchProject(project.id, useProjectStore.getState().currentEpisodeId!);
+    fetchProject(project.id, currentEpisodeId ?? undefined);
   }
 
   async function handleBatchGenerateVideoPrompts() {
@@ -255,7 +278,7 @@ export default function EpisodeStoryboardPage() {
           action: "batch_video_prompt",
           payload: { versionId: selectedVersionId },
           modelConfig: getModelConfig(),
-          episodeId: useProjectStore.getState().currentEpisodeId,
+          episodeId: currentEpisodeId ?? undefined,
         }),
       });
       const data = await response.json() as { results: Array<{ status: string }> };
@@ -268,7 +291,7 @@ export default function EpisodeStoryboardPage() {
     }
 
     setGeneratingVideoPrompts(false);
-    fetchProject(project.id, useProjectStore.getState().currentEpisodeId!);
+    fetchProject(project.id, currentEpisodeId ?? undefined);
   }
 
   async function handleBatchGenerateReferenceVideos(overwrite = false) {
@@ -285,11 +308,16 @@ export default function EpisodeStoryboardPage() {
           action: "batch_reference_video",
           payload: { ratio: videoRatio, overwrite, versionId: selectedVersionId },
           modelConfig: getModelConfig(),
-          episodeId: useProjectStore.getState().currentEpisodeId,
+          episodeId: currentEpisodeId ?? undefined,
         }),
       });
-      const data = await response.json() as { results: Array<{ status: string }> };
-      if (data.results?.some((r) => r.status === "error")) {
+      const data = await response.json() as {
+        results: Array<{ status: string; error?: string; sequence?: number }>;
+      };
+      const firstError = data.results?.find((r) => r.status === "error");
+      if (firstError?.error) {
+        toast.error(firstError.error);
+      } else if (firstError) {
         toast.warning(t("common.batchPartialFailed"));
       }
     } catch (err) {
@@ -299,7 +327,7 @@ export default function EpisodeStoryboardPage() {
 
     setGeneratingVideosOverwrite(false);
     setGeneratingVideos(false);
-    fetchProject(project.id, useProjectStore.getState().currentEpisodeId!);
+    fetchProject(project.id, currentEpisodeId ?? undefined);
   }
 
   async function handleAutoRun() {
@@ -333,11 +361,11 @@ export default function EpisodeStoryboardPage() {
       {/* Page header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
-            <Film className="h-4 w-4 text-primary" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[--primary]/10 shadow-lg shadow-[--primary]/10">
+            <Film className="h-4 w-4 text-[--primary]" />
           </div>
           <div>
-            <h2 className="font-display text-xl font-bold tracking-tight text-[--text-primary]">
+            <h2 className="font-display text-xl font-bold tracking-tight text-[--foreground]">
               {t("project.storyboard")}
             </h2>
             <p className="text-xs text-[--text-muted]">
@@ -347,34 +375,34 @@ export default function EpisodeStoryboardPage() {
         </div>
         <div className="flex items-center gap-2">
           {totalShots > 0 && (
-            <div className="inline-flex gap-1 rounded-xl border border-[--border-subtle] bg-[--surface] p-1">
+            <div className="inline-flex gap-1 rounded-xl border border-[--border-subtle] bg-[--card]/80 backdrop-blur-xl p-1 shadow-sm">
               <button
                 onClick={() => switchView("list")}
                 className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold transition-all duration-150 ${
                   viewMode === "list"
-                    ? "bg-white text-primary shadow ring-1 ring-primary/20"
-                    : "text-[--text-muted] hover:bg-white/60 hover:text-[--text-secondary]"
+                    ? "bg-[--primary] text-[--primary-foreground] shadow-lg shadow-[--primary]/20"
+                    : "text-[--text-muted] hover:bg-[--surface] hover:text-[--text-secondary]"
                 }`}
               >
-                <List className={`h-3.5 w-3.5 ${viewMode === "list" ? "text-primary" : ""}`} />
+                <List className={`h-3.5 w-3.5 ${viewMode === "list" ? "text-[--primary-foreground]" : ""}`} />
                 {t("project.viewList")}
               </button>
               <button
                 onClick={() => switchView("kanban")}
                 className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold transition-all duration-150 ${
                   viewMode === "kanban"
-                    ? "bg-white text-primary shadow ring-1 ring-primary/20"
-                    : "text-[--text-muted] hover:bg-white/60 hover:text-[--text-secondary]"
+                    ? "bg-[--primary] text-[--primary-foreground] shadow-lg shadow-[--primary]/20"
+                    : "text-[--text-muted] hover:bg-[--surface] hover:text-[--text-secondary]"
                 }`}
               >
-                <LayoutGrid className={`h-3.5 w-3.5 ${viewMode === "kanban" ? "text-primary" : ""}`} />
+                <LayoutGrid className={`h-3.5 w-3.5 ${viewMode === "kanban" ? "text-[--primary-foreground]" : ""}`} />
                 {t("project.viewKanban")}
               </button>
             </div>
           )}
           {totalShots > 0 && (
             <Link
-              href={`/${locale}/project/${project!.id}/episodes/${useProjectStore.getState().currentEpisodeId}/preview${selectedVersionId ? `?versionId=${selectedVersionId}` : ""}`}
+              href={previewHref()}
               className="inline-flex items-center gap-1.5 rounded-md border border-input bg-background px-3 py-1.5 text-sm font-medium shadow-xs hover:bg-accent hover:text-accent-foreground"
             >
               <Film className="h-3.5 w-3.5" />
@@ -387,7 +415,7 @@ export default function EpisodeStoryboardPage() {
               size="sm"
               onClick={() => {
                 const a = document.createElement("a");
-                a.href = `/api/projects/${project!.id}/download?episodeId=${useProjectStore.getState().currentEpisodeId}`;
+                a.href = `/api/projects/${project!.id}/download${currentEpisodeId ? `?episodeId=${currentEpisodeId}` : ""}`;
                 a.download = "";
                 a.click();
               }}
@@ -400,9 +428,9 @@ export default function EpisodeStoryboardPage() {
       </div>
 
       {/* ── Control Panel ── */}
-      <div className="rounded-2xl border border-[--border-subtle] bg-white p-4 space-y-3">
+      <div className="rounded-2xl border border-[--border-subtle] bg-[--card]/80 backdrop-blur-xl p-5 space-y-5 shadow-xl shadow-black/5">
         {/* Generation mode + version tabs row */}
-        <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center justify-between gap-4 flex-wrap">
           <GenerationModeTab />
 
           {/* Version tabs */}
@@ -412,13 +440,10 @@ export default function EpisodeStoryboardPage() {
               {versions.slice(0, 2).map((v) => (
                 <button
                   key={v.id}
-                  onClick={() => {
-                    setSelectedVersionId(v.id);
-                    fetchProject(project!.id, undefined, v.id);
-                  }}
-                  className={`rounded-lg px-3 py-1.5 text-[13px] font-medium transition-colors ${
-                    selectedVersionId === v.id
-                      ? "bg-primary/10 text-primary"
+                  onClick={() => handleSelectVersion(v.id)}
+                  className={`rounded-lg px-3 py-1.5 text-[13px] font-medium transition-all duration-150 ${
+                    versionIsActive(v.id)
+                      ? "bg-[--primary]/10 text-[--primary] shadow-sm"
                       : "text-[--text-muted] hover:bg-[--surface] hover:text-[--text-secondary]"
                   }`}
                 >
@@ -430,32 +455,31 @@ export default function EpisodeStoryboardPage() {
                 <div className="relative" ref={versionDropdownRef}>
                   <button
                     onClick={() => setVersionDropdownOpen((o) => !o)}
-                    className={`flex items-center gap-0.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-colors ${
-                      versions.slice(2).some((v) => v.id === selectedVersionId)
-                        ? "bg-primary/10 text-primary"
+                    className={`flex items-center gap-0.5 rounded-lg px-2.5 py-1.5 text-[13px] font-medium transition-all duration-150 ${
+                      versions.slice(2).some((v) => versionIsActive(v.id))
+                        ? "bg-[--primary]/10 text-[--primary] shadow-sm"
                         : "text-[--text-muted] hover:bg-[--surface] hover:text-[--text-secondary]"
                     }`}
                   >
-                    {versions.slice(2).some((v) => v.id === selectedVersionId)
-                      ? versions.find((v) => v.id === selectedVersionId)?.label
+                    {versions.slice(2).some((v) => versionIsActive(v.id))
+                      ? versionLabel(activeVersionId!)
                       : `+${versions.length - 2}`}
                     <ChevronDown className={`h-3 w-3 transition-transform ${versionDropdownOpen ? "rotate-180" : ""}`} />
                   </button>
                   {versionDropdownOpen && (
                     <div
-                      className="absolute right-0 top-full z-20 mt-1 min-w-[140px] overflow-hidden rounded-xl border border-[--border-subtle] bg-white shadow-lg"
+                      className="absolute right-0 top-full z-20 mt-1 min-w-[140px] overflow-hidden rounded-xl border border-[--border-subtle] bg-[--card] shadow-xl shadow-black/10"
                       onMouseLeave={() => setVersionDropdownOpen(false)}
                     >
                       {versions.slice(2).map((v) => (
                         <button
                           key={v.id}
                           onClick={() => {
-                            setSelectedVersionId(v.id);
-                            fetchProject(project!.id, undefined, v.id);
+                            handleSelectVersion(v.id);
                             setVersionDropdownOpen(false);
                           }}
                           className={`w-full px-3 py-2 text-left text-[13px] font-medium transition-colors hover:bg-[--surface] ${
-                            selectedVersionId === v.id ? "text-primary" : "text-[--text-secondary]"
+                            versionIsActive(v.id) ? "text-[--primary]" : "text-[--text-secondary]"
                           }`}
                         >
                           {v.label}
@@ -465,10 +489,24 @@ export default function EpisodeStoryboardPage() {
                   )}
                 </div>
               )}
+
+              {versions.length > 0 && (
+                <button
+                  onClick={handleOpenLatestVersion}
+                  className={`rounded-lg px-3 py-1.5 text-[13px] font-medium transition-all duration-150 ${
+                    activeVersionId === null
+                      ? "bg-[--primary]/10 text-[--primary] shadow-sm"
+                      : "text-[--text-muted] hover:bg-[--surface] hover:text-[--text-secondary]"
+                  }`}
+                >
+                  Latest
+                </button>
+              )}
+
               <button
                 onClick={handleGenerateShots}
                 disabled={anyGenerating}
-                className="flex items-center gap-1 rounded-lg px-2 py-1.5 text-[13px] text-[--text-muted] transition-colors hover:bg-[--surface] hover:text-[--text-secondary] disabled:opacity-40"
+                className="ml-1 flex items-center gap-1 rounded-lg px-2 py-1.5 text-[13px] text-[--text-muted] transition-colors hover:bg-[--surface] hover:text-[--text-secondary] disabled:opacity-40"
                 title={t("project.generateShots")}
               >
                 <Plus className="h-3.5 w-3.5" />
@@ -482,185 +520,205 @@ export default function EpisodeStoryboardPage() {
           characters={project.characters}
           projectId={project.id}
           generationMode={generationMode}
-          onUpdate={() => fetchProject(project.id, useProjectStore.getState().currentEpisodeId!)}
+          onUpdate={() => fetchProject(project.id, currentEpisodeId ?? undefined)}
         />
 
         {/* Batch operations */}
         {viewMode === "list" && (
-        <div className="space-y-2">
-          {/* Row 1: Generate text / shots */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="w-4 h-4 flex-shrink-0 flex items-center justify-center rounded-full bg-[--surface] text-[10px] font-bold text-[--text-muted]">1</span>
-            <InlineModelPicker capability="text" />
-            <Button
-              onClick={handleGenerateShots}
-              disabled={anyGenerating}
-              variant={totalShots > 0 ? "outline" : "default"}
-              size="sm"
-            >
-              {generating ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Sparkles className="h-3.5 w-3.5" />
-              )}
-              {generating ? t("common.generating") : t("project.generateShots")}
-            </Button>
+        <div className="space-y-4">
+          {/* Pipeline steps - visual grouping */}
+          <div className="relative">
+            {/* Step progress indicator */}
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <div className="w-full h-px bg-gradient-to-r from-transparent via-[--border-subtle] to-transparent" />
+            </div>
+            <div className="relative flex items-center justify-center">
+              <span className="bg-[--card] px-3 text-[10px] font-semibold uppercase tracking-widest text-[--text-muted]">
+                {t("project.pipeline")}
+              </span>
+            </div>
           </div>
 
-          {/* Row 2: Frames */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="w-4 h-4 flex-shrink-0 flex items-center justify-center rounded-full bg-[--surface] text-[10px] font-bold text-[--text-muted]">2</span>
-            <InlineModelPicker capability="image" />
-            {generationMode === "keyframe" ? (
-              <>
+          {/* Step cards with better visual grouping */}
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {/* Step 1: Generate text / shots */}
+            <div className="group rounded-xl border border-[--border-subtle] bg-[--surface]/50 p-3 transition-all duration-200 hover:border-[--primary]/30 hover:bg-[--surface] hover:shadow-lg hover:shadow-[--primary]/5">
+              <div className="mb-2 flex items-center gap-2">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[--primary]/10 text-[10px] font-bold text-[--primary]">1</span>
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-[--text-muted]">{t("project.stepText")}</span>
+              </div>
+              <InlineModelPicker capability="text" />
+              <Button
+                onClick={handleGenerateShots}
+                disabled={anyGenerating}
+                variant={totalShots > 0 ? "outline" : "default"}
+                size="sm"
+                className="mt-2 w-full"
+              >
+                {generating ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="h-3.5 w-3.5" />
+                )}
+                {generating ? t("common.generating") : t("project.generateShots")}
+              </Button>
+            </div>
+
+            {/* Step 2: Frames */}
+            <div className="group rounded-xl border border-[--border-subtle] bg-[--surface]/50 p-3 transition-all duration-200 hover:border-[--warning]/30 hover:bg-[--surface] hover:shadow-lg hover:shadow-[--warning]/5">
+              <div className="mb-2 flex items-center gap-2">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[--warning]/10 text-[10px] font-bold text-[--warning]">2</span>
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-[--text-muted]">{generationMode === "keyframe" ? t("project.stepFrames") : t("project.stepSceneFrame")}</span>
+              </div>
+              <InlineModelPicker capability="image" />
+              {generationMode === "keyframe" ? (
+                <div className="mt-2 flex gap-1.5">
+                  <Button
+                    onClick={() => handleBatchGenerateFrames(false)}
+                    disabled={anyGenerating || totalShots === 0}
+                    variant={shotsWithFrames === totalShots && totalShots > 0 ? "outline" : "default"}
+                    size="sm"
+                    className="flex-1"
+                  >
+                    {generatingFrames && !generatingFramesOverwrite ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <ImageIcon className="h-3.5 w-3.5" />
+                    )}
+                  </Button>
+                  <Button
+                    onClick={() => handleBatchGenerateFrames(true)}
+                    disabled={anyGenerating || totalShots === 0}
+                    variant="ghost"
+                    size="icon"
+                    title={t("project.batchGenerateFramesOverwrite")}
+                  >
+                    {generatingFrames && generatingFramesOverwrite ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-3.5 w-3.5" />
+                    )}
+                  </Button>
+                </div>
+              ) : (
+                <div className="mt-2 flex gap-1.5">
+                  <Button
+                    onClick={() => handleBatchGenerateSceneFrames(false)}
+                    disabled={anyGenerating || totalShots === 0 || !hasReferenceImages}
+                    variant={shotsWithSceneFrames === totalShots && totalShots > 0 ? "outline" : "default"}
+                    size="sm"
+                    className="flex-1"
+                  >
+                    {generatingSceneFrames && !sceneFramesOverwrite ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <ImageIcon className="h-3.5 w-3.5" />
+                    )}
+                  </Button>
+                  <Button
+                    onClick={() => handleBatchGenerateSceneFrames(true)}
+                    disabled={anyGenerating || totalShots === 0 || !hasReferenceImages}
+                    variant="ghost"
+                    size="icon"
+                    title={t("project.batchGenerateSceneFramesOverwrite")}
+                  >
+                    {generatingSceneFrames && sceneFramesOverwrite ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <RefreshCw className="h-3.5 w-3.5" />
+                    )}
+                  </Button>
+                </div>
+              )}
+            </div>
+
+            {/* Step 3: Video prompts */}
+            <div className="group rounded-xl border border-[--border-subtle] bg-[--surface]/50 p-3 transition-all duration-200 hover:border-[--accent]/30 hover:bg-[--surface] hover:shadow-lg hover:shadow-[--accent]/5">
+              <div className="mb-2 flex items-center gap-2">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[--accent]/10 text-[10px] font-bold text-[--accent]">3</span>
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-[--text-muted]">{t("project.stepPrompts")}</span>
+              </div>
+              <InlineModelPicker capability="text" />
+              <Button
+                onClick={handleBatchGenerateVideoPrompts}
+                disabled={anyGenerating || shotsWithFrameAny === 0}
+                variant={shotsWithVideoPrompts === totalShots && totalShots > 0 ? "outline" : "default"}
+                size="sm"
+                className="mt-2 w-full"
+              >
+                {generatingVideoPrompts ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="h-3.5 w-3.5" />
+                )}
+              </Button>
+            </div>
+
+            {/* Step 4: Videos */}
+            <div className="group rounded-xl border border-[--border-subtle] bg-[--surface]/50 p-3 transition-all duration-200 hover:border-[--success]/30 hover:bg-[--surface] hover:shadow-lg hover:shadow-[--success]/5">
+              <div className="mb-2 flex items-center gap-2">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[--success]/10 text-[10px] font-bold text-[--success]">4</span>
+                <span className="text-[11px] font-semibold uppercase tracking-wider text-[--text-muted]">{t("project.stepVideos")}</span>
+              </div>
+              <InlineModelPicker capability="video" />
+              <div className="mt-2 flex items-center gap-1.5">
+                <VideoRatioPicker value={videoRatio} onChange={setVideoRatio} />
                 <Button
-                  onClick={() => handleBatchGenerateFrames(false)}
-                  disabled={anyGenerating || totalShots === 0}
-                  variant={shotsWithFrames === totalShots && totalShots > 0 ? "outline" : "default"}
+                  onClick={() =>
+                    generationMode === "reference"
+                      ? handleBatchGenerateReferenceVideos(false)
+                      : handleBatchGenerateVideos(false)
+                  }
+                  disabled={anyGenerating || totalShots === 0 || (generationMode === "reference" ? !hasReferenceImages : shotsWithFrames === 0)}
+                  variant={shotsWithVideo === totalShots && totalShots > 0 ? "outline" : "default"}
                   size="sm"
+                  className="flex-1"
                 >
-                  {generatingFrames && !generatingFramesOverwrite ? (
+                  {generatingVideos && !generatingVideosOverwrite ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   ) : (
-                    <ImageIcon className="h-3.5 w-3.5" />
+                    <VideoIcon className="h-3.5 w-3.5" />
                   )}
-                  {generatingFrames && !generatingFramesOverwrite
-                    ? t("common.generating")
-                    : t("project.batchGenerateFrames")}
                 </Button>
                 <Button
-                  onClick={() => handleBatchGenerateFrames(true)}
-                  disabled={anyGenerating || totalShots === 0}
+                  onClick={() =>
+                    generationMode === "reference"
+                      ? handleBatchGenerateReferenceVideos(true)
+                      : handleBatchGenerateVideos(true)
+                  }
+                  disabled={anyGenerating || totalShots === 0 || (generationMode === "reference" ? !hasReferenceImages : shotsWithFrames === 0)}
                   variant="ghost"
                   size="icon"
-                  title={t("project.batchGenerateFramesOverwrite")}
+                  title={t("project.batchGenerateVideosOverwrite")}
                 >
-                  {generatingFrames && generatingFramesOverwrite ? (
+                  {generatingVideos && generatingVideosOverwrite ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   ) : (
                     <RefreshCw className="h-3.5 w-3.5" />
                   )}
-                </Button>
-              </>
-            ) : (
-              <>
-                <Button
-                  onClick={() => handleBatchGenerateSceneFrames(false)}
-                  disabled={anyGenerating || totalShots === 0 || !hasReferenceImages}
-                  variant={shotsWithSceneFrames === totalShots && totalShots > 0 ? "outline" : "default"}
-                  size="sm"
-                >
-                  {generatingSceneFrames && !sceneFramesOverwrite ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <ImageIcon className="h-3.5 w-3.5" />
-                  )}
-                  {generatingSceneFrames && !sceneFramesOverwrite
-                    ? t("common.generating")
-                    : t("project.batchGenerateSceneFrames")}
-                </Button>
-                <Button
-                  onClick={() => handleBatchGenerateSceneFrames(true)}
-                  disabled={anyGenerating || totalShots === 0 || !hasReferenceImages}
-                  variant="ghost"
-                  size="icon"
-                  title={t("project.batchGenerateSceneFramesOverwrite")}
-                >
-                  {generatingSceneFrames && sceneFramesOverwrite ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <RefreshCw className="h-3.5 w-3.5" />
-                  )}
-                </Button>
-              </>
-            )}
-          </div>
-
-          {/* Row 3: Video prompts */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="w-4 h-4 flex-shrink-0 flex items-center justify-center rounded-full bg-[--surface] text-[10px] font-bold text-[--text-muted]">3</span>
-            <InlineModelPicker capability="text" />
-            <Button
-              onClick={handleBatchGenerateVideoPrompts}
-              disabled={anyGenerating || shotsWithFrameAny === 0}
-              variant={shotsWithVideoPrompts === totalShots && totalShots > 0 ? "outline" : "default"}
-              size="sm"
-            >
-              {generatingVideoPrompts ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Sparkles className="h-3.5 w-3.5" />
-              )}
-              {generatingVideoPrompts ? t("common.generating") : t("project.batchGenerateVideoPrompts")}
-            </Button>
-          </div>
-
-          {/* Row 4: Videos */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="w-4 h-4 flex-shrink-0 flex items-center justify-center rounded-full bg-[--surface] text-[10px] font-bold text-[--text-muted]">4</span>
-            <InlineModelPicker capability="video" />
-            <VideoRatioPicker value={videoRatio} onChange={setVideoRatio} />
-            <Button
-              onClick={() =>
-                generationMode === "reference"
-                  ? handleBatchGenerateReferenceVideos(false)
-                  : handleBatchGenerateVideos(false)
-              }
-              disabled={anyGenerating || totalShots === 0 || (generationMode === "reference" ? !hasReferenceImages : shotsWithFrames === 0)}
-              variant={shotsWithVideo === totalShots && totalShots > 0 ? "outline" : "default"}
-              size="sm"
-            >
-              {generatingVideos && !generatingVideosOverwrite ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <VideoIcon className="h-3.5 w-3.5" />
-              )}
-              {generatingVideos && !generatingVideosOverwrite
-                ? t("common.generating")
-                : generationMode === "reference"
-                  ? t("project.batchGenerateReferenceVideos")
-                  : t("project.batchGenerateVideos")}
-            </Button>
-            <Button
-              onClick={() =>
-                generationMode === "reference"
-                  ? handleBatchGenerateReferenceVideos(true)
-                  : handleBatchGenerateVideos(true)
-              }
-              disabled={anyGenerating || totalShots === 0 || (generationMode === "reference" ? !hasReferenceImages : shotsWithFrames === 0)}
-              variant="ghost"
-              size="icon"
-              title={t("project.batchGenerateVideosOverwrite")}
-            >
-              {generatingVideos && generatingVideosOverwrite ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <RefreshCw className="h-3.5 w-3.5" />
-              )}
-            </Button>
-          </div>
-
-          {/* Divider + Auto-run */}
-          {totalShots > 0 && (
-            <>
-              <div className="h-px bg-[--border-subtle]" />
-              <div className="flex items-center gap-2">
-                <Button
-                  onClick={handleAutoRun}
-                  disabled={anyGenerating}
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5"
-                >
-                  {anyGenerating ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <Play className="h-3.5 w-3.5" />
-                  )}
-                  {t("project.autoRun")}
                 </Button>
               </div>
-            </>
+            </div>
+          </div>
+
+          {/* Auto-run */}
+          {totalShots > 0 && (
+            <div className="flex items-center justify-center pt-2">
+              <Button
+                onClick={handleAutoRun}
+                disabled={anyGenerating}
+                variant="outline"
+                size="sm"
+                className="gap-2 px-6"
+              >
+                {anyGenerating ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Play className="h-3.5 w-3.5" />
+                )}
+                {t("project.autoRun")}
+              </Button>
+            </div>
           )}
         </div>
         )}
@@ -734,7 +792,7 @@ export default function EpisodeStoryboardPage() {
                   : shot.status
               }
               dialogues={shot.dialogues || []}
-              onUpdate={() => fetchProject(project.id, useProjectStore.getState().currentEpisodeId!)}
+              onUpdate={() => fetchProject(project.id, currentEpisodeId ?? undefined)}
               generationMode={generationMode}
               videoRatio={videoRatio}
               isCompact={openDrawerShotId !== null}
@@ -753,7 +811,7 @@ export default function EpisodeStoryboardPage() {
           openShotId={openDrawerShotId}
           onClose={() => setOpenDrawerShotId(null)}
           onShotChange={(id) => setOpenDrawerShotId(id)}
-          onUpdate={() => fetchProject(project.id, useProjectStore.getState().currentEpisodeId!)}
+          onUpdate={() => fetchProject(project.id, currentEpisodeId ?? undefined)}
           projectId={project.id}
           generationMode={generationMode}
           videoRatio={videoRatio}

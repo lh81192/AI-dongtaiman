@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "AI 코믹 빌더",
+    "appName": "SketchLive",
     "create": "만들기",
     "save": "저장",
     "delete": "삭제",
@@ -18,6 +18,9 @@
   "dashboard": {
     "title": "내 프로젝트",
     "newProject": "새 프로젝트",
+    "projectSource": "입력 방식",
+    "projectSourceScript": "스크립트 입력",
+    "projectSourceEpub": "EPUB 가져오기",
     "noProjects": "아직 프로젝트가 없습니다. 위 버튼을 클릭하여 만들어 보세요.",
     "deleteConfirmTitle": "프로젝트 삭제",
     "deleteConfirmDesc": "\"{title}\"을(를) 삭제하시겠습니까? 이 작업은 되돌릴 수 없으며 관련된 모든 데이터가 영구적으로 삭제됩니다.",
@@ -173,6 +176,11 @@
     "complete": "가져오기 완료!",
     "newImport": "새로 가져오기",
     "retry": "재시도",
+    "retryHintParse": "이 단계를 다시 시도하기 전에 파일을 다시 업로드하세요.",
+    "retryHintModelChanged": "현재 페이지에서 이 단계를 바로 다시 시도할 수 있습니다.",
+    "retryHintMissingText": "분석된 텍스트가 없습니다. 먼저 파일을 다시 업로드하고 분석하세요.",
+    "retryHintMissingCharacters": "캐릭터 결과가 없습니다. 먼저 캐릭터 추출을 다시 시도하세요.",
+    "retryHintMissingEpisodes": "에피소드 결과가 없습니다. 먼저 자동 분할을 다시 시도하세요.",
     "showAll": "전체 보기",
     "main": "메인",
     "guest": "게스트",
@@ -182,7 +190,27 @@
       "characters": "캐릭터 추출",
       "split": "자동 분할",
       "generate": "에피소드 생성"
-    }
+    },
+    "epubTitle": "EPUB 가져오기",
+    "epubUpload": "EPUB 업로드",
+    "epubDropHint": "클릭하거나 EPUB 파일을 드래그하세요",
+    "epubSupportedFormats": "EPUB 지원 — 최대 200MB",
+    "epubFileTooLarge": "파일이 너무 큽니다 — 최대 200MB",
+    "epubUploadComplete": "EPUB 업로드 완료",
+    "epubBookInfo": "책 정보",
+    "epubPagesTitle": "페이지 갤러리",
+    "epubPagesHint": "업로드 후 페이지를 선택하고 순서를 조정한 뒤 storyboard로 가져올 수 있습니다.",
+    "epubSelectedCount": "선택됨 {selected} / {total} 페이지",
+    "epubPagesSaved": "페이지 선택과 순서가 저장되었습니다",
+    "epubNoPages": "아직 업로드된 EPUB 페이지가 없습니다",
+    "epubNoSelectedPages": "최소 한 페이지를 선택하세요",
+    "epubCharactersTitle": "캐릭터 정보",
+    "epubCharactersHint": "이름, 설명, 외형 힌트를 직접 입력하세요. storyboard 가져오기 시 프로젝트에 저장됩니다.",
+    "epubAddCharacter": "캐릭터 추가",
+    "epubNoCharacters": "아직 캐릭터가 없습니다. 오른쪽 위에서 추가하세요.",
+    "epubImportStoryboard": "스토리보드로 가져오기",
+    "epubImportComplete": "스토리보드로 가져왔습니다",
+    "epubOpenStoryboard": "스토리보드 열기"
   },
   "uploadScript": {
     "title": "각본 업로드",
@@ -219,5 +247,122 @@
     "languageModels": "언어 모델",
     "imageModels": "이미지 모델",
     "videoModels": "비디오 모델"
+  },
+  "landing": {
+    "brand": "SketchLive",
+    "tagline": "스크립트에서 스토리보드와 영상까지",
+    "eyebrow": "AI 코믹 제작을 위한 통합 워크플로우",
+    "login": "로그인",
+    "register": "회원가입",
+    "openApp": "앱 열기",
+    "admin": "관리자",
+    "hero": {
+      "title": "스크립트와 EPUB을 AI 코믹 영상으로 전환하세요.",
+      "description": "AI 코믹 빌더는 스토리 분석, 캐릭터 추출, 프레임 생성, 비디오 프롬프트 생성, 샷 렌더링을 하나의 제작 워크스페이스로 묶어줍니다.",
+      "primaryCta": "계정 만들기",
+      "secondaryCta": "로그인하기"
+    },
+    "stats": {
+      "items": [
+        { "value": "스크립트 → 영상", "label": "하나로 이어진 제작 흐름" },
+        { "value": "멀티 모델", "label": "텍스트·이미지·비디오 제공자 지원" },
+        { "value": "에피소드 제작", "label": "연재형 제작에 최적화" }
+      ]
+    },
+    "preview": {
+      "title": "반복 가능한 제작을 위한 설계",
+      "description": "여러 도구를 수동으로 이어 붙이지 않고, 아이디어에서 결과물까지 한 공간에서 진행할 수 있습니다.",
+      "items": [
+        { "title": "스크립트 분석", "description": "원본 스크립트를 구조화된 에피소드, 샷, 캐릭터 정보로 분해합니다." },
+        { "title": "스토리보드 생성", "description": "키프레임, 장면 참조 이미지, 바로 사용할 수 있는 샷 설명을 생성합니다." },
+        { "title": "비디오 파이프라인", "description": "비디오 프롬프트 생성, 클립 렌더링, 에피소드별 출력 조립까지 지원합니다." }
+      ]
+    },
+    "features": {
+      "title": "핵심 기능",
+      "description": "AI 코믹에서 영상까지 이어지는 제작 파이프라인에 필요한 기능을 하나의 대시보드에 담았습니다.",
+      "items": [
+        { "title": "스토리 이해", "description": "스크립트나 EPUB을 프로젝트, 에피소드, 장면 단위로 분석합니다." },
+        { "title": "캐릭터 일관성", "description": "메인/게스트 캐릭터를 관리하고 외형 설명과 참조 이미지를 유지합니다." },
+        { "title": "프레임 생성", "description": "설정한 이미지 모델로 키프레임과 장면 참조 프레임을 생성합니다." },
+        { "title": "비디오 생성", "description": "프롬프트에서 샷 영상을 만들고 최종 에피소드 결과물로 조립합니다." }
+      ]
+    },
+    "workflow": {
+      "title": "워크플로우가 연결되는 방식",
+      "description": "개별 생성기보다 실제 제작 절차에 맞춰 앱 전체가 구성되어 있습니다.",
+      "items": [
+        { "title": "1. 가져오기와 구조화", "description": "스크립트 또는 EPUB으로 시작해 프로젝트 구조, 에피소드, 샷 분해를 생성합니다." },
+        { "title": "2. 시각 자료 생성", "description": "각 샷에 대해 캐릭터 이미지, 첫 프레임, 마지막 프레임, 장면 참조를 생성합니다." },
+        { "title": "3. 렌더링과 합성", "description": "비디오 프롬프트를 만든 뒤 지원 모델로 샷을 렌더링하고 최종 에피소드를 출력합니다." }
+      ]
+    },
+    "cta": {
+      "title": "지금 바로 제작 워크스페이스를 시작하세요",
+      "description": "계정을 만들면 프로젝트 저장, 자산 관리, 세션 간 이어서 작업이 가능합니다.",
+      "primary": "시작하기",
+      "secondary": "이미 계정이 있습니다"
+    }
+  },
+  "auth": {
+    "brand": "SketchLive",
+    "email": "이메일",
+    "password": "비밀번호",
+    "passwordPlaceholder": "8자 이상 입력하세요",
+    "login": "로그인",
+    "register": "회원가입",
+    "logout": "로그아웃",
+    "loginEyebrow": "다시 오신 것을 환영합니다",
+    "registerEyebrow": "제작 워크스페이스 만들기",
+    "loginTitle": "프로젝트를 계속하려면 로그인하세요.",
+    "registerTitle": "AI 코믹 빌더 계정을 만드세요.",
+    "loginDescription": "저장된 프로젝트, 스토리보드 파이프라인, 모델 설정을 하나의 안전한 워크스페이스에서 이용할 수 있습니다.",
+    "registerDescription": "실제 계정을 만들면 프로젝트 저장, 이전 익명 작업 인계, 여러 기기에서 이어서 작업이 가능합니다.",
+    "loginCardDescription": "이메일과 비밀번호를 입력해 워크스페이스를 여세요.",
+    "registerCardDescription": "이메일과 비밀번호로 가입하고 프로젝트 관리를 시작하세요.",
+    "noAccount": "아직 계정이 없으신가요?",
+    "haveAccount": "이미 계정이 있으신가요?",
+    "unknownError": "문제가 발생했습니다. 다시 시도해 주세요.",
+    "networkError": "네트워크 오류가 발생했습니다. 다시 시도해 주세요."
+  },
+  "admin": {
+    "brand": "SketchLive 관리자",
+    "eyebrow": "관리자 접근",
+    "title": "관리 콘솔에 로그인하세요.",
+    "description": "독립된 관리자 비밀번호로 플랫폼 상태, 사용자 증가, 작업 큐, 저장소 사용량을 확인할 수 있습니다.",
+    "password": "관리자 비밀번호",
+    "passwordPlaceholder": "관리자 비밀번호를 입력하세요",
+    "login": "관리자 입장",
+    "logout": "로그아웃",
+    "loginCardDescription": "이 영역은 일반 사용자 계정과 분리되어 있습니다.",
+    "disabledTitle": "관리자 로그인을 사용할 수 없습니다",
+    "disabledDescription": "현재 관리자 모드가 비활성화되어 있습니다.",
+    "disabledHint": "관리자 콘솔을 활성화하려면 ADMIN_PASSWORD를 설정하세요.",
+    "overviewTitle": "관리자 개요",
+    "overviewSubtitle": "읽기 전용 운영 대시보드",
+    "overviewDescription": "이 MVP는 관리자 접근을 일반 사용자 계정과 분리한 상태로 애플리케이션 운영 지표를 보여줍니다.",
+    "taskStatusTitle": "작업 큐 상태",
+    "taskStatusDescription": "파이프라인이 추적하는 비동기 작업의 현재 개수입니다.",
+    "importStatusTitle": "가져오기 상태",
+    "importStatusDescription": "상태별로 집계한 가져오기 로그 수입니다.",
+    "storageTitle": "저장소 사용량",
+    "storageDescription": "데이터베이스 파일과 업로드 디렉터리 기준 디스크 사용량입니다.",
+    "modelAccessTitle": "모델 가용성",
+    "modelAccessDescription": "환경 변수 기준 모델 연결 상태와 가져오기 볼륨 개요입니다.",
+    "usersListTitle": "최신 사용자",
+    "usersListDescription": "가장 최근에 등록된 계정 목록입니다.",
+    "projectsListTitle": "최신 프로젝트",
+    "projectsListDescription": "소유자와 상태를 포함한 최신 프로젝트 기록입니다.",
+    "failedTasksTitle": "최근 실패 작업",
+    "failedTasksDescription": "빠르게 확인할 수 있는 최신 실패 파이프라인 작업입니다.",
+    "recentActivityTitle": "최근 활동",
+    "recentActivityDescription": "시스템의 최신 프로젝트 및 작업 기록입니다.",
+    "emptyUsers": "아직 사용자가 없습니다.",
+    "emptyProjects": "아직 프로젝트가 없습니다.",
+    "emptyFailedTasks": "현재 실패한 작업이 없습니다.",
+    "openProject": "프로젝트 열기",
+    "emptyActivity": "최근 활동이 없습니다.",
+    "unknownError": "문제가 발생했습니다. 다시 시도해 주세요.",
+    "networkError": "네트워크 오류가 발생했습니다. 다시 시도해 주세요."
   }
 }

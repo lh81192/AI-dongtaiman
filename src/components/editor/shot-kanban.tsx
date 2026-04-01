@@ -128,9 +128,9 @@ export function ShotKanban({
   return (
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       {columns.map((col) => (
-        <div key={col.key} className="flex flex-col rounded-2xl border border-[--border-subtle] bg-white overflow-hidden">
+        <div key={col.key} className="flex flex-col rounded-2xl border border-[--border-subtle] bg-[--card]/80 backdrop-blur-xl overflow-hidden shadow-lg shadow-black/5 transition-all duration-200 hover:shadow-xl hover:shadow-black/10">
           {/* Column header */}
-          <div className={`flex items-center gap-2 border-b px-3 py-2 ${col.headerBg}`}>
+          <div className={`flex items-center gap-2 border-b px-3 py-2.5 ${col.headerBg}`}>
             <span className={col.color}>{col.icon}</span>
             <span className={`flex-1 text-[12px] font-semibold ${col.color}`}>
               {t(col.labelKey as Parameters<typeof t>[0])}

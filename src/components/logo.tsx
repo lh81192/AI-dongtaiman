@@ -6,7 +6,7 @@ interface LogoIconProps {
 }
 
 /**
- * AI Comic Builder logo — a comic speech bubble with a sparkle/AI star,
+ * SketchLive logo — a comic speech bubble with a sparkle/AI star,
  * representing AI-powered comic creation.
  */
 export function LogoIcon({ className, size = 20 }: LogoIconProps) {
@@ -40,11 +40,11 @@ export function LogoIcon({ className, size = 20 }: LogoIconProps) {
 export function LogoFull({ className }: { className?: string }) {
   return (
     <div className={cn("flex items-center gap-2.5", className)}>
-      <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-[--primary] text-white">
+      <div className="flex h-8 w-8 items-center justify-center rounded-[10px] bg-[--primary] text-[--primary-foreground]">
         <LogoIcon size={18} />
       </div>
-      <span className="font-display text-[15px] font-bold tracking-tight text-[#1A1A1A]">
-        AI Comic Builder
+      <span className="font-display text-[15px] font-bold tracking-tight text-[--foreground]">
+        SketchLive
       </span>
     </div>
   );

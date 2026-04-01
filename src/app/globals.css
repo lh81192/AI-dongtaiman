@@ -110,47 +110,47 @@
 }
 
 .dark {
-  --background: #FAFAF8;
-  --foreground: #1A1A1A;
-  --card: #FFFFFF;
-  --card-foreground: #1A1A1A;
-  --popover: #FFFFFF;
-  --popover-foreground: #1A1A1A;
+  --background: #0C0C0E;
+  --foreground: #F5F5F3;
+  --card: #1A1A1C;
+  --card-foreground: #F5F5F3;
+  --popover: #1A1A1C;
+  --popover-foreground: #F5F5F3;
   --primary: #E8553A;
   --primary-foreground: #FFFFFF;
-  --secondary: #F3F3F0;
-  --secondary-foreground: #5A5A5A;
-  --muted: #F0F0EC;
+  --secondary: #252528;
+  --secondary-foreground: #A0A098;
+  --muted: #252528;
   --muted-foreground: #8A8A82;
   --accent: #10B981;
   --accent-foreground: #FFFFFF;
   --destructive: #EF4444;
-  --border: #E8E8E3;
-  --input: #E8E8E3;
-  --ring: #E8553A40;
+  --border: #2E2E32;
+  --input: #2E2E32;
+  --ring: #E8553A60;
   --chart-1: #E8553A;
   --chart-2: #10B981;
   --chart-3: #8B5CF6;
   --chart-4: #F59E0B;
   --chart-5: #3B82F6;
-  --sidebar: #FFFFFF;
-  --sidebar-foreground: #1A1A1A;
+  --sidebar: #141416;
+  --sidebar-foreground: #F5F5F3;
   --sidebar-primary: #E8553A;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #F8F8F5;
-  --sidebar-accent-foreground: #1A1A1A;
-  --sidebar-border: #E8E8E3;
-  --sidebar-ring: #E8553A40;
-  --surface: #F5F5F2;
-  --surface-hover: #EEEEEA;
-  --elevated: #FFFFFF;
+  --sidebar-accent: #252528;
+  --sidebar-accent-foreground: #F5F5F3;
+  --sidebar-border: #2E2E32;
+  --sidebar-ring: #E8553A60;
+  --surface: #1A1A1C;
+  --surface-hover: #252528;
+  --elevated: #1A1A1C;
   --success: #10B981;
   --warning: #F59E0B;
-  --text-primary: #1A1A1A;
-  --text-secondary: #6B6B64;
-  --text-muted: #A0A098;
-  --border-subtle: #E8E8E3;
-  --border-hover: #D0D0C8;
+  --text-primary: #F5F5F3;
+  --text-secondary: #A0A098;
+  --text-muted: #6B6B64;
+  --border-subtle: #2E2E32;
+  --border-hover: #3E3E42;
   --glow-primary: #E8553A18;
   --glow-accent: #10B98118;
 }
@@ -245,3 +245,24 @@
 .stagger-4 { animation-delay: 0.2s; }
 .stagger-5 { animation-delay: 0.25s; }
 .stagger-6 { animation-delay: 0.3s; }
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .animate-fade-up,
+  .animate-fade-in,
+  .animate-page-in,
+  .animate-shimmer,
+  .animate-status-pulse,
+  .animate-float {
+    animation: none;
+  }
+}

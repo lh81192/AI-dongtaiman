@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "AI 漫剧生成器",
+    "appName": "绘活",
     "create": "创建",
     "save": "保存",
     "delete": "删除",
@@ -18,6 +18,9 @@
   "dashboard": {
     "title": "我的项目",
     "newProject": "新建项目",
+    "projectSource": "创建方式",
+    "projectSourceScript": "剧本输入",
+    "projectSourceEpub": "EPUB 导入",
     "noProjects": "还没有项目，点击上方按钮创建一个吧",
     "deleteConfirmTitle": "删除项目",
     "deleteConfirmDesc": "确定要删除「{title}」吗？此操作不可撤销，所有相关数据将被永久删除。",
@@ -173,6 +176,11 @@
     "complete": "导入完成！",
     "newImport": "新建导入",
     "retry": "重试",
+    "retryHintParse": "请重新上传文件后重试当前步骤。",
+    "retryHintModelChanged": "你已经可以在当前页面直接重试这一步。",
+    "retryHintMissingText": "当前缺少已解析文本，请先重新上传并解析文件。",
+    "retryHintMissingCharacters": "当前缺少角色结果，请先重试角色提取。",
+    "retryHintMissingEpisodes": "当前缺少分集结果，请先重试自动分集。",
     "showAll": "显示全部",
     "main": "主角",
     "guest": "配角",
@@ -182,7 +190,27 @@
       "characters": "角色提取",
       "split": "自动分集",
       "generate": "创建分集"
-    }
+    },
+    "epubTitle": "导入 EPUB",
+    "epubUpload": "上传 EPUB",
+    "epubDropHint": "点击或拖拽 EPUB 文件到此处",
+    "epubSupportedFormats": "支持 EPUB 格式，最大 200MB",
+    "epubFileTooLarge": "文件太大，最大支持 200MB",
+    "epubUploadComplete": "EPUB 上传完成",
+    "epubBookInfo": "书籍信息",
+    "epubPagesTitle": "页面画廊",
+    "epubPagesHint": "上传后可勾选页面、调整顺序，并把整页导入到 storyboard。",
+    "epubSelectedCount": "已选 {selected} / {total} 页",
+    "epubPagesSaved": "页面选择和顺序已保存",
+    "epubNoPages": "尚未上传任何 EPUB 页面",
+    "epubNoSelectedPages": "请至少选择一页",
+    "epubCharactersTitle": "角色信息",
+    "epubCharactersHint": "手动填写角色名称、描述和外观提示。这些角色会在导入 storyboard 时写入项目。",
+    "epubAddCharacter": "添加角色",
+    "epubNoCharacters": "还没有角色，点击右上角添加。",
+    "epubImportStoryboard": "导入到分镜",
+    "epubImportComplete": "已导入到分镜",
+    "epubOpenStoryboard": "打开分镜"
   },
   "uploadScript": {
     "title": "上传剧本",
@@ -219,5 +247,122 @@
     "languageModels": "语言模型",
     "imageModels": "图片模型",
     "videoModels": "视频模型"
+  },
+  "landing": {
+    "brand": "绘活",
+    "tagline": "从脚本到分镜再到视频",
+    "eyebrow": "面向 AI 漫剧生产的完整工作流",
+    "login": "登录",
+    "register": "注册",
+    "openApp": "进入工作台",
+    "admin": "管理后台",
+    "hero": {
+      "title": "把脚本和 EPUB 转成 AI 漫剧视频。",
+      "description": "绘活将故事解析、角色提取、画面生成、视频提示词生成与镜头渲染整合进同一个生产工作台。",
+      "primaryCta": "创建账号",
+      "secondaryCta": "立即登录"
+    },
+    "stats": {
+      "items": [
+        { "value": "脚本 → 视频", "label": "一体化生产流程" },
+        { "value": "多模型", "label": "支持文本、图像、视频供应商" },
+        { "value": "连载友好", "label": "适合多集内容制作" }
+      ]
+    },
+    "preview": {
+      "title": "为可重复生产而设计",
+      "description": "不再手动拼接多个工具，直接在同一工作区完成从创意到成片素材的制作。",
+      "items": [
+        { "title": "脚本解析", "description": "把原始脚本拆分成结构化的章节、镜头与角色信息。" },
+        { "title": "分镜生成", "description": "生成关键帧、场景参考图和可直接使用的镜头描述。" },
+        { "title": "视频流水线", "description": "生成视频提示词、渲染镜头片段，并为每一集拼装输出。" }
+      ]
+    },
+    "features": {
+      "title": "核心能力",
+      "description": "在一个控制台中覆盖 AI 漫剧转视频的关键生产能力。",
+      "items": [
+        { "title": "故事理解", "description": "将脚本或 EPUB 内容解析为项目、分集和剧情节点。" },
+        { "title": "角色一致性", "description": "管理主角和客串角色，并维护外观描述与参考图。" },
+        { "title": "画面生成", "description": "使用可配置的图像模型生成关键帧和场景参考帧。" },
+        { "title": "视频生成", "description": "基于提示词生成镜头视频，并拼装为最终分集成片。" }
+      ]
+    },
+    "workflow": {
+      "title": "完整流程如何衔接",
+      "description": "产品围绕真实生产流程设计，而不是零散的单点生成器。",
+      "items": [
+        { "title": "1. 导入并结构化", "description": "从脚本或 EPUB 开始，生成项目结构、分集和镜头拆解。" },
+        { "title": "2. 生成视觉素材", "description": "为每个镜头生成角色图、首尾帧和场景参考图。" },
+        { "title": "3. 渲染并合成", "description": "生成视频提示词，调用支持的模型渲染镜头，并输出最终分集。" }
+      ]
+    },
+    "cta": {
+      "title": "开始搭建你的漫剧生产工作台",
+      "description": "注册账号后即可保存项目、管理素材，并在不同会话中持续推进生产流程。",
+      "primary": "立即开始",
+      "secondary": "我已有账号"
+    }
+  },
+  "auth": {
+    "brand": "绘活",
+    "email": "邮箱",
+    "password": "密码",
+    "passwordPlaceholder": "至少 8 位字符",
+    "login": "登录",
+    "register": "注册",
+    "logout": "退出登录",
+    "loginEyebrow": "欢迎回来",
+    "registerEyebrow": "创建你的工作区",
+    "loginTitle": "登录后继续你的项目。",
+    "registerTitle": "为绘活创建账号。",
+    "loginDescription": "在一个安全工作区中访问你的项目、分镜流程与模型设置。",
+    "registerDescription": "创建真实账号后即可保存项目、认领此前匿名项目，并在不同设备间继续制作。",
+    "loginCardDescription": "输入邮箱和密码，进入你的工作区。",
+    "registerCardDescription": "使用邮箱和密码注册，开始管理你的项目。",
+    "noAccount": "还没有账号？",
+    "haveAccount": "已经有账号了？",
+    "unknownError": "发生错误，请稍后重试。",
+    "networkError": "网络错误，请稍后重试。"
+  },
+  "admin": {
+    "brand": "绘活管理后台",
+    "eyebrow": "管理员访问",
+    "title": "登录管理控制台。",
+    "description": "使用独立管理员密码查看平台运行情况、用户增长、任务状态与存储占用。",
+    "password": "管理员密码",
+    "passwordPlaceholder": "请输入管理员密码",
+    "login": "进入后台",
+    "logout": "退出后台",
+    "loginCardDescription": "该区域与普通用户账号体系完全隔离。",
+    "disabledTitle": "管理员登录不可用",
+    "disabledDescription": "当前尚未启用管理员模式。",
+    "disabledHint": "请配置 ADMIN_PASSWORD 以启用管理后台。",
+    "overviewTitle": "管理员总览",
+    "overviewSubtitle": "只读运营看板",
+    "overviewDescription": "该 MVP 提供应用层面的核心运营指标，并保持管理员访问与普通用户体系分离。",
+    "taskStatusTitle": "任务队列状态",
+    "taskStatusDescription": "当前异步流水线任务的状态分布。",
+    "importStatusTitle": "导入流程状态",
+    "importStatusDescription": "按状态分组展示导入日志统计。",
+    "storageTitle": "存储占用",
+    "storageDescription": "基于数据库文件和上传目录计算的磁盘使用情况。",
+    "modelAccessTitle": "模型可用性",
+    "modelAccessDescription": "基于环境变量的模型接入状态与导入量概览。",
+    "usersListTitle": "最新用户",
+    "usersListDescription": "最近注册的账号列表。",
+    "projectsListTitle": "最新项目",
+    "projectsListDescription": "包含归属用户与状态的最新项目记录。",
+    "failedTasksTitle": "最近失败任务",
+    "failedTasksDescription": "便于快速排查的最新失败流水线任务。",
+    "recentActivityTitle": "最近活动",
+    "recentActivityDescription": "系统中最新的项目和任务记录。",
+    "emptyUsers": "暂无用户。",
+    "emptyProjects": "暂无项目。",
+    "emptyFailedTasks": "当前没有失败任务。",
+    "openProject": "打开项目",
+    "emptyActivity": "暂无最近活动。",
+    "unknownError": "发生错误，请稍后重试。",
+    "networkError": "网络错误，请稍后重试。"
   }
 }

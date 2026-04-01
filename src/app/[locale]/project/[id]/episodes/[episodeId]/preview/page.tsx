@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import Image from "next/image";
 import { useSearchParams, useParams } from "next/navigation";
 import { useProjectStore } from "@/stores/project-store";
 import { Button } from "@/components/ui/button";
@@ -21,103 +22,131 @@ import { toast } from "sonner";
 
 export default function EpisodePreviewPage() {
   const t = useTranslations();
-  const { project, fetchProject } = useProjectStore();
+  const { project, fetchProject, currentEpisodeId } = useProjectStore();
   const searchParams = useSearchParams();
   const params = useParams<{ id: string }>();
   const versionId = searchParams.get("versionId");
 
-  useEffect(() => {
-    if (versionId && params?.id) {
-      fetchProject(params.id, undefined, versionId);
-    }
-  }, [versionId, params?.id, fetchProject]);
-
   const [assembling, setAssembling] = useState(false);
   const [selectedShot, setSelectedShot] = useState(0);
   const [videoValid, setVideoValid] = useState<boolean | null>(null);
-  const checkedUrl = useRef<string | null>(null);
+  const [validatedVideoUrl, setValidatedVideoUrl] = useState<string | null>(null);
+  const [previewModeOverride, setPreviewModeOverride] = useState<"keyframe" | "reference" | null>(null);
+  const requestedVideoUrl = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (versionId && params?.id) {
+      fetchProject(params.id, currentEpisodeId ?? undefined, versionId);
+    }
+  }, [versionId, params?.id, fetchProject, currentEpisodeId]);
 
   const finalVideoUrl = project?.finalVideoUrl ?? null;
-  const generationMode = project?.generationMode ?? "keyframe";
-
-  // Which mode's videos to preview — default to the project's generationMode
-  const hasKeyframeVideos = project?.shots.some((s) => s.videoUrl) ?? false;
-  const hasReferenceVideos = project?.shots.some((s) => s.referenceVideoUrl) ?? false;
+  const generationMode = project?.generationMode === "reference" ? "reference" : "keyframe";
+  const hasKeyframeVideos = project?.shots.some((shot) => Boolean(shot.videoUrl)) ?? false;
+  const hasReferenceVideos = project?.shots.some((shot) => Boolean(shot.referenceVideoUrl)) ?? false;
   const hasBothModes = hasKeyframeVideos && hasReferenceVideos;
 
-  const [previewMode, setPreviewMode] = useState<"keyframe" | "reference">(generationMode);
+  const previewMode = useMemo<"keyframe" | "reference">(() => {
+    if (previewModeOverride === "reference" && hasReferenceVideos) return "reference";
+    if (previewModeOverride === "keyframe" && hasKeyframeVideos) return "keyframe";
+    if (generationMode === "reference" && hasReferenceVideos) return "reference";
+    if (generationMode === "keyframe" && hasKeyframeVideos) return "keyframe";
+    if (hasReferenceVideos) return "reference";
+    return "keyframe";
+  }, [previewModeOverride, generationMode, hasReferenceVideos, hasKeyframeVideos]);
 
-  // Sync previewMode when project loads
   useEffect(() => {
-    if (project) setPreviewMode(project.generationMode ?? "keyframe");
-  }, [project?.generationMode]);
+    if (!finalVideoUrl) {
+      requestedVideoUrl.current = null;
+      return;
+    }
+    if (requestedVideoUrl.current === finalVideoUrl) return;
 
-  // Check if final video file actually exists
-  useEffect(() => {
-    if (!finalVideoUrl) { setVideoValid(null); return; }
-    if (checkedUrl.current === finalVideoUrl) return;
-    checkedUrl.current = finalVideoUrl;
+    requestedVideoUrl.current = finalVideoUrl;
+    let cancelled = false;
+
     fetch(uploadUrl(finalVideoUrl), { method: "HEAD" })
-      .then((res) => setVideoValid(res.ok))
-      .catch(() => setVideoValid(false));
+      .then((res) => {
+        if (cancelled) return;
+        setValidatedVideoUrl(finalVideoUrl);
+        setVideoValid(res.ok);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setValidatedVideoUrl(finalVideoUrl);
+        setVideoValid(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [finalVideoUrl]);
 
   if (!project) return null;
 
-  const getVideoUrl = (shot: typeof project.shots[0]) =>
+  const getVideoUrl = (shot: (typeof project.shots)[number]) =>
     previewMode === "reference" ? shot.referenceVideoUrl : shot.videoUrl;
 
-  const getThumbnail = (shot: typeof project.shots[0]) =>
+  const getThumbnail = (shot: (typeof project.shots)[number]) =>
     previewMode === "reference" ? shot.sceneRefFrame : shot.firstFrame;
 
-  const shotsWithVideo = project.shots.filter((s) => getVideoUrl(s));
-  const allShotsHaveVideo = project.shots.length > 0 && project.shots.every((s) => getVideoUrl(s));
+  const shotsWithVideo = project.shots.filter((shot) => getVideoUrl(shot));
+  const safeSelectedShot = shotsWithVideo.length > 0
+    ? Math.min(selectedShot, shotsWithVideo.length - 1)
+    : 0;
+  const currentShot = shotsWithVideo[safeSelectedShot];
   const completedVideos = shotsWithVideo.length;
-  const currentShot = shotsWithVideo[selectedShot];
-  const hasValidVideo = finalVideoUrl && videoValid === true;
+  const allShotsHaveVideo = project.shots.length > 0 && project.shots.every((shot) => getVideoUrl(shot));
+  const hasValidVideo = Boolean(finalVideoUrl) && validatedVideoUrl === finalVideoUrl && videoValid === true;
 
   async function handleAssemble() {
-    if (!project) return;
     setAssembling(true);
-    checkedUrl.current = null;
+    requestedVideoUrl.current = null;
+
     try {
       const res = await apiFetch(`/api/projects/${project.id}/generate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "video_assemble", payload: versionId ? { versionId } : undefined, episodeId: useProjectStore.getState().currentEpisodeId }),
+        body: JSON.stringify({
+          action: "video_assemble",
+          payload: versionId ? { versionId } : undefined,
+          episodeId: currentEpisodeId ?? undefined,
+        }),
       });
       await res.json();
     } catch (err) {
       console.error("Video assemble error:", err);
       toast.error(t("common.generationFailed"));
     }
+
     setAssembling(false);
-    await fetchProject(project.id, useProjectStore.getState().currentEpisodeId!);
+    await fetchProject(project.id, currentEpisodeId ?? undefined);
   }
 
   function handleDownload() {
-    if (!hasValidVideo) return;
+    if (!hasValidVideo || !finalVideoUrl) return;
     const a = document.createElement("a");
-    a.href = uploadUrl(finalVideoUrl!);
-    a.download = `${project!.title || "video"}-final.mp4`;
+    a.href = uploadUrl(finalVideoUrl);
+    a.download = `${project.title || "video"}-final.mp4`;
     a.click();
   }
 
   function handleModeSwitch(mode: "keyframe" | "reference") {
-    setPreviewMode(mode);
+    if (mode === "reference" && !hasReferenceVideos) return;
+    if (mode === "keyframe" && !hasKeyframeVideos) return;
+    setPreviewModeOverride(mode);
     setSelectedShot(0);
   }
 
   return (
     <div className="animate-page-in space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10">
-            <Monitor className="h-4 w-4 text-primary" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[--primary]/10">
+            <Monitor className="h-4 w-4 text-[--primary]" />
           </div>
           <div>
-            <h2 className="font-display text-xl font-bold tracking-tight text-[--text-primary]">
+            <h2 className="font-display text-xl font-bold tracking-tight text-[--foreground]">
               {t("project.preview")}
             </h2>
             <p className="text-xs text-[--text-muted]">
@@ -130,7 +159,12 @@ export default function EpisodePreviewPage() {
         </div>
         <div className="flex items-center gap-2">
           {hasValidVideo && (
-            <Button onClick={handleDownload} size="sm" variant="outline" className="border-emerald-300 text-emerald-700 hover:bg-emerald-100">
+            <Button
+              onClick={handleDownload}
+              size="sm"
+              variant="outline"
+              className="border-[--success]/30 text-[--success] hover:bg-[--success]/10"
+            >
               <Download className="h-3.5 w-3.5" />
               {t("project.downloadVideo")}
             </Button>
@@ -150,54 +184,53 @@ export default function EpisodePreviewPage() {
         </div>
       </div>
 
-      {/* Mode switcher — only shown when both modes have videos */}
       {hasBothModes && (
-        <div className="flex items-center gap-1 rounded-xl border border-[--border-subtle] bg-[--surface] p-1 w-fit">
-          <button
-            onClick={() => handleModeSwitch("keyframe")}
-            className={cn(
-              "rounded-lg px-3 py-1.5 text-xs font-semibold transition-all duration-150",
-              previewMode === "keyframe"
-                ? "bg-white text-primary shadow ring-1 ring-primary/20"
-                : "text-[--text-muted] hover:bg-white/60 hover:text-[--text-secondary]"
-            )}
-          >
-            {t("project.generationModeKeyframe")}
-          </button>
-          <button
-            onClick={() => handleModeSwitch("reference")}
-            className={cn(
-              "rounded-lg px-3 py-1.5 text-xs font-semibold transition-all duration-150",
-              previewMode === "reference"
-                ? "bg-white text-primary shadow ring-1 ring-primary/20"
-                : "text-[--text-muted] hover:bg-white/60 hover:text-[--text-secondary]"
-            )}
-          >
-            {t("project.generationModeReference")}
-          </button>
+        <div className="w-fit rounded-xl border border-[--border-subtle] bg-[--surface] p-1">
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => handleModeSwitch("keyframe")}
+              className={cn(
+                "rounded-lg px-3 py-1.5 text-xs font-semibold transition-all duration-150",
+                previewMode === "keyframe"
+                  ? "bg-white text-primary shadow ring-1 ring-primary/20"
+                  : "text-[--text-muted] hover:bg-white/60 hover:text-[--text-secondary]"
+              )}
+            >
+              {t("project.generationModeKeyframe")}
+            </button>
+            <button
+              onClick={() => handleModeSwitch("reference")}
+              className={cn(
+                "rounded-lg px-3 py-1.5 text-xs font-semibold transition-all duration-150",
+                previewMode === "reference"
+                  ? "bg-white text-primary shadow ring-1 ring-primary/20"
+                  : "text-[--text-muted] hover:bg-white/60 hover:text-[--text-secondary]"
+              )}
+            >
+              {t("project.generationModeReference")}
+            </button>
+          </div>
         </div>
       )}
 
-      {/* Final video player */}
-      {hasValidVideo && (
+      {hasValidVideo && finalVideoUrl && (
         <div className="space-y-3">
-          <div className="overflow-hidden rounded-2xl border border-emerald-200 bg-black shadow-2xl shadow-black/40">
+          <div className="overflow-hidden rounded-2xl border border-[--success]/20 bg-black shadow-2xl shadow-black/40">
             <video
-              key={finalVideoUrl!}
+              key={finalVideoUrl}
               controls
               autoPlay
               className="aspect-video w-full"
-              src={uploadUrl(finalVideoUrl!)}
+              src={uploadUrl(finalVideoUrl)}
             />
           </div>
-          <div className="flex items-center gap-2 rounded-xl bg-emerald-50 px-4 py-2.5">
-            <span className="text-sm font-medium text-emerald-700">{t("project.finalVideo")}</span>
-            <span className="text-xs text-emerald-600/70">{t("project.finalVideoHint")}</span>
+          <div className="flex items-center gap-2 rounded-xl border border-[--success]/20 bg-[--success]/10 backdrop-blur-sm px-4 py-2.5">
+            <span className="text-sm font-medium text-[--success]">{t("project.finalVideo")}</span>
+            <span className="text-xs text-[--success]/70">{t("project.finalVideoHint")}</span>
           </div>
         </div>
       )}
 
-      {/* Shot clips player */}
       {shotsWithVideo.length > 0 && currentShot ? (
         <div className="space-y-4">
           <div className="overflow-hidden rounded-2xl border border-[--border-subtle] bg-black shadow-2xl shadow-black/40">
@@ -210,50 +243,49 @@ export default function EpisodePreviewPage() {
             />
           </div>
 
-          {/* Navigation */}
           <div className="flex items-center justify-center gap-4">
             <button
-              onClick={() => setSelectedShot(Math.max(0, selectedShot - 1))}
-              disabled={selectedShot === 0}
+              onClick={() => setSelectedShot(Math.max(0, safeSelectedShot - 1))}
+              disabled={safeSelectedShot === 0}
               className="flex h-8 w-8 items-center justify-center rounded-lg text-[--text-muted] transition-all hover:bg-[--surface-hover] hover:text-[--text-primary] disabled:opacity-30"
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
             <span className="font-mono text-sm font-medium text-[--text-secondary]">
-              {selectedShot + 1} / {shotsWithVideo.length}
+              {safeSelectedShot + 1} / {shotsWithVideo.length}
             </span>
             <button
-              onClick={() =>
-                setSelectedShot(Math.min(shotsWithVideo.length - 1, selectedShot + 1))
-              }
-              disabled={selectedShot === shotsWithVideo.length - 1}
+              onClick={() => setSelectedShot(Math.min(shotsWithVideo.length - 1, safeSelectedShot + 1))}
+              disabled={safeSelectedShot === shotsWithVideo.length - 1}
               className="flex h-8 w-8 items-center justify-center rounded-lg text-[--text-muted] transition-all hover:bg-[--surface-hover] hover:text-[--text-primary] disabled:opacity-30"
             >
               <ChevronRight className="h-4 w-4" />
             </button>
           </div>
 
-          {/* Thumbnail timeline */}
           <div className="flex gap-2 overflow-x-auto pb-2">
-            {shotsWithVideo.map((shot, i) => {
+            {shotsWithVideo.map((shot, index) => {
               const thumb = getThumbnail(shot);
               return (
                 <button
                   key={shot.id}
-                  onClick={() => setSelectedShot(i)}
+                  onClick={() => setSelectedShot(index)}
                   className={cn(
                     "flex-shrink-0 overflow-hidden rounded-xl border-2 transition-all duration-200",
-                    i === selectedShot
-                      ? "border-primary shadow-lg shadow-primary/20 scale-[1.03]"
-                      : "border-[--border-subtle] hover:border-[--border-hover] opacity-70 hover:opacity-100"
+                    index === safeSelectedShot
+                      ? "scale-[1.03] border-primary shadow-lg shadow-primary/20"
+                      : "border-[--border-subtle] opacity-70 hover:border-[--border-hover] hover:opacity-100"
                   )}
                 >
                   <div className="relative h-14 w-22">
                     {thumb ? (
-                      <img
+                      <Image
                         src={uploadUrl(thumb)}
                         alt={`Shot ${shot.sequence}`}
-                        className="h-full w-full object-cover"
+                        fill
+                        unoptimized
+                        sizes="88px"
+                        className="object-cover"
                       />
                     ) : (
                       <div className="flex h-full w-full items-center justify-center bg-[--surface]">
@@ -270,7 +302,6 @@ export default function EpisodePreviewPage() {
           </div>
         </div>
       ) : (
-        /* Empty state */
         <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-[--border-subtle] bg-[--surface]/50 py-24">
           <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/15 to-accent/10">
             <Play className="h-7 w-7 text-primary" />

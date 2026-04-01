@@ -415,7 +415,7 @@ export function ShotCard({
   }
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-[--border-subtle] bg-white transition-colors hover:border-[--border-hover]">
+    <div className="overflow-hidden rounded-2xl border border-[--border-subtle] bg-[--card] transition-all duration-300 hover:-translate-y-1 hover:border-[--border-hover] hover:shadow-xl hover:shadow-black/5">
       {/* ── Header ── */}
       <div className="flex items-center gap-3 px-4 py-3">
         {/* Sequence */}

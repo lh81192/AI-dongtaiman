@@ -1,6 +1,6 @@
 {
   "common": {
-    "appName": "AI コミックビルダー",
+    "appName": "SketchLive",
     "create": "作成",
     "save": "保存",
     "delete": "削除",
@@ -18,6 +18,9 @@
   "dashboard": {
     "title": "マイプロジェクト",
     "newProject": "新規プロジェクト",
+    "projectSource": "入力ソース",
+    "projectSourceScript": "脚本入力",
+    "projectSourceEpub": "EPUB インポート",
     "noProjects": "まだプロジェクトがありません。上のボタンをクリックして作成しましょう。",
     "deleteConfirmTitle": "プロジェクトを削除",
     "deleteConfirmDesc": "「{title}」を削除してもよろしいですか？この操作は取り消せません。関連するすべてのデータが完全に削除されます。",
@@ -173,6 +176,11 @@
     "complete": "インポート完了！",
     "newImport": "新規インポート",
     "retry": "再試行",
+    "retryHintParse": "この手順を再試行する前に、ファイルを再アップロードしてください。",
+    "retryHintModelChanged": "このページから直接この手順を再試行できます。",
+    "retryHintMissingText": "解析済みテキストがありません。先にファイルを再アップロードして解析してください。",
+    "retryHintMissingCharacters": "キャラクター結果がありません。先にキャラクター抽出を再試行してください。",
+    "retryHintMissingEpisodes": "エピソード結果がありません。先に自動分割を再試行してください。",
     "showAll": "すべて表示",
     "main": "メイン",
     "guest": "ゲスト",
@@ -182,7 +190,27 @@
       "characters": "キャラクター抽出",
       "split": "自動分割",
       "generate": "エピソード作成"
-    }
+    },
+    "epubTitle": "EPUB をインポート",
+    "epubUpload": "EPUB をアップロード",
+    "epubDropHint": "クリックまたは EPUB ファイルをドラッグ",
+    "epubSupportedFormats": "EPUB 対応 — 最大 200MB",
+    "epubFileTooLarge": "ファイルが大きすぎます — 最大 200MB",
+    "epubUploadComplete": "EPUB のアップロードが完了しました",
+    "epubBookInfo": "書籍情報",
+    "epubPagesTitle": "ページギャラリー",
+    "epubPagesHint": "アップロード後、ページ選択・並び替えを行い、そのまま storyboard に取り込めます。",
+    "epubSelectedCount": "選択済み {selected} / {total} ページ",
+    "epubPagesSaved": "ページ選択と並び順を保存しました",
+    "epubNoPages": "まだ EPUB ページがありません",
+    "epubNoSelectedPages": "少なくとも 1 ページ選択してください",
+    "epubCharactersTitle": "キャラクター情報",
+    "epubCharactersHint": "名前、説明、外見ヒントを手動入力します。storyboard 取り込み時にプロジェクトへ保存されます。",
+    "epubAddCharacter": "キャラクター追加",
+    "epubNoCharacters": "まだキャラクターがありません。右上から追加してください。",
+    "epubImportStoryboard": "分鏡に取り込む",
+    "epubImportComplete": "storyboard に取り込みました",
+    "epubOpenStoryboard": "storyboard を開く"
   },
   "uploadScript": {
     "title": "脚本をアップロード",
@@ -219,5 +247,122 @@
     "languageModels": "言語モデル",
     "imageModels": "画像モデル",
     "videoModels": "動画モデル"
+  },
+  "landing": {
+    "brand": "SketchLive",
+    "tagline": "脚本から絵コンテ、そして動画へ",
+    "eyebrow": "AIコミック制作のための統合ワークフロー",
+    "login": "ログイン",
+    "register": "登録",
+    "openApp": "アプリを開く",
+    "admin": "管理画面",
+    "hero": {
+      "title": "脚本や EPUB を AI コミック動画へ変換。",
+      "description": "AIコミックビルダーは、物語解析、キャラクター抽出、フレーム生成、動画プロンプト生成、ショットレンダリングをひとつの制作ワークスペースにまとめます。",
+      "primaryCta": "アカウントを作成",
+      "secondaryCta": "サインイン"
+    },
+    "stats": {
+      "items": [
+        { "value": "脚本 → 動画", "label": "統合された制作フロー" },
+        { "value": "マルチモデル", "label": "テキスト・画像・動画プロバイダー対応" },
+        { "value": "連載向け", "label": "エピソード制作を前提に設計" }
+      ]
+    },
+    "preview": {
+      "title": "繰り返し使える制作環境",
+      "description": "複数ツールを手作業でつなぐことなく、アイデアから完成素材までを同じ場所で進められます。",
+      "items": [
+        { "title": "脚本解析", "description": "生の脚本を構造化されたエピソード、ショット、キャラクター情報へ分解します。" },
+        { "title": "絵コンテ生成", "description": "キーフレーム、シーン参照画像、すぐ使えるショット説明を生成します。" },
+        { "title": "動画パイプライン", "description": "動画プロンプト生成、クリップのレンダリング、各エピソードの出力組み立てまで対応します。" }
+      ]
+    },
+    "features": {
+      "title": "主要機能",
+      "description": "AIコミックから動画までの制作に必要な機能をひとつのダッシュボードに集約しています。",
+      "items": [
+        { "title": "物語理解", "description": "脚本や EPUB をプロジェクト、エピソード、展開単位に解析します。" },
+        { "title": "キャラクター整合性", "description": "メイン・ゲストキャラクターを管理し、外見説明や参照画像を維持します。" },
+        { "title": "フレーム生成", "description": "設定した画像モデルでキーフレームやシーン参照フレームを生成します。" },
+        { "title": "動画生成", "description": "プロンプトからショット動画を作成し、最終的なエピソード映像へまとめます。" }
+      ]
+    },
+    "workflow": {
+      "title": "制作フローの流れ",
+      "description": "単発の生成機能ではなく、実際の制作手順に沿ってアプリ全体が構成されています。",
+      "items": [
+        { "title": "1. 取り込みと構造化", "description": "脚本または EPUB から始めて、プロジェクト構造、エピソード、ショット分解を作成します。" },
+        { "title": "2. ビジュアル素材生成", "description": "各ショットに対してキャラクター画像、開始フレーム、終了フレーム、シーン参照を生成します。" },
+        { "title": "3. レンダリングと結合", "description": "動画プロンプト生成後、対応モデルでショットをレンダリングし、最終エピソードを出力します。" }
+      ]
+    },
+    "cta": {
+      "title": "制作ワークスペースを今すぐ開始",
+      "description": "アカウントを作成すると、プロジェクト保存、素材管理、継続的な制作が可能になります。",
+      "primary": "始める",
+      "secondary": "すでにアカウントがあります"
+    }
+  },
+  "auth": {
+    "brand": "SketchLive",
+    "email": "メールアドレス",
+    "password": "パスワード",
+    "passwordPlaceholder": "8文字以上",
+    "login": "ログイン",
+    "register": "登録",
+    "logout": "ログアウト",
+    "loginEyebrow": "おかえりなさい",
+    "registerEyebrow": "制作ワークスペースを作成",
+    "loginTitle": "プロジェクトを続けるためにログインしてください。",
+    "registerTitle": "AIコミックビルダーのアカウントを作成。",
+    "loginDescription": "保存済みプロジェクト、絵コンテ作業、モデル設定をひとつの安全なワークスペースで管理できます。",
+    "registerDescription": "実アカウントを作成すると、プロジェクト保存、以前の匿名作業の引き継ぎ、複数端末での継続制作が可能になります。",
+    "loginCardDescription": "メールアドレスとパスワードを入力してワークスペースを開きます。",
+    "registerCardDescription": "メールアドレスとパスワードで登録して、プロジェクト管理を開始します。",
+    "noAccount": "アカウントをお持ちでないですか？",
+    "haveAccount": "すでにアカウントをお持ちですか？",
+    "unknownError": "エラーが発生しました。もう一度お試しください。",
+    "networkError": "ネットワークエラーです。もう一度お試しください。"
+  },
+  "admin": {
+    "brand": "SketchLive 管理画面",
+    "eyebrow": "管理者アクセス",
+    "title": "管理コンソールにログインしてください。",
+    "description": "独立した管理者パスワードで、プラットフォームの稼働状況、ユーザー増加、タスク状態、ストレージ使用量を確認できます。",
+    "password": "管理者パスワード",
+    "passwordPlaceholder": "管理者パスワードを入力",
+    "login": "管理画面へ入る",
+    "logout": "ログアウト",
+    "loginCardDescription": "この領域は通常のユーザーアカウントとは分離されています。",
+    "disabledTitle": "管理者ログインは利用できません",
+    "disabledDescription": "現在、管理者モードは無効です。",
+    "disabledHint": "管理画面を有効にするには ADMIN_PASSWORD を設定してください。",
+    "overviewTitle": "管理者ダッシュボード",
+    "overviewSubtitle": "読み取り専用の運用ビュー",
+    "overviewDescription": "この MVP は、管理者アクセスを通常ユーザーと分離したまま、アプリケーション層の主要な運用指標を表示します。",
+    "taskStatusTitle": "タスクキューの状態",
+    "taskStatusDescription": "パイプラインで追跡される非同期処理の現在件数です。",
+    "importStatusTitle": "インポート処理の状態",
+    "importStatusDescription": "ステータス別に集計したインポートログ件数です。",
+    "storageTitle": "ストレージ使用量",
+    "storageDescription": "データベースファイルとアップロードディレクトリから計測したディスク使用量です。",
+    "modelAccessTitle": "モデル利用可否",
+    "modelAccessDescription": "環境変数ベースのモデル接続状況と取り込み量の概要です。",
+    "usersListTitle": "最新ユーザー",
+    "usersListDescription": "最近登録されたアカウント一覧です。",
+    "projectsListTitle": "最新プロジェクト",
+    "projectsListDescription": "所有者と状態を含む最新プロジェクト記録です。",
+    "failedTasksTitle": "最近失敗したタスク",
+    "failedTasksDescription": "素早く確認できる最新の失敗パイプラインタスクです。",
+    "recentActivityTitle": "最近のアクティビティ",
+    "recentActivityDescription": "システム内の最新プロジェクトとタスク記録です。",
+    "emptyUsers": "ユーザーはまだありません。",
+    "emptyProjects": "プロジェクトはまだありません。",
+    "emptyFailedTasks": "現在、失敗タスクはありません。",
+    "openProject": "プロジェクトを開く",
+    "emptyActivity": "最近のアクティビティはまだありません。",
+    "unknownError": "エラーが発生しました。もう一度お試しください。",
+    "networkError": "ネットワークエラーです。もう一度お試しください。"
   }
 }
